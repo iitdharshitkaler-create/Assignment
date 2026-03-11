@@ -1,0 +1,27 @@
+.container {
+  display: "flex";
+  flex-direction: "column";
+  justify-content: "center";
+  align-items: "center";
+  height: "100vh";
+  gap: "20px"
+}
+
+.title {
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #1d4ed8;
+}
