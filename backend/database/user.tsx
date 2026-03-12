@@ -10,6 +10,12 @@ const User = new mongoose.Schema(
         projects: [{
             type: mongoose.Schema.Types.ObjectId, ref: "project"
         }],
+        projectAdmin: [{ type: mongoose.Schema.Types.ObjectId, ref: "project"
+        }],
+        projectMember: [{type: mongoose.Schema.Types.ObjectId, ref: "project"
+        }],
+        projectViewer: [{type: mongoose.Schema.Types.ObjectId, ref: "project"
+        }]
     }
 )
 

@@ -6,6 +6,8 @@ import LoginPage from "./pages/loginpage"
 import RegisterPage from "./pages/registerpage"
 import CreateNewProject from "./pages/projectpage/createnew"
 import ProjectInfo from "./pages/projectpage/projectinfo"
+import BoardInfo from "./pages/projectpage/boardinfo"
+import StoryInfo from "./pages/story/storypage"
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
         <Route path="/createnew" element={<CreateNewProject />} />
         <Route path="/projectinfo" element={<ProjectInfo />} />
         <Route path="/projectinfo/:id" element={<ProjectInfo />} />
+        <Route path="/projectinfo/:id/:boardid/:boardpos" element={<BoardInfo />} />
+        <Route path="/storyinfo/:id/:boardid/:boardpos/:storyid" element={<StoryInfo />} />
         
       </Routes>
     </BrowserRouter>

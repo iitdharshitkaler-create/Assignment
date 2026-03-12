@@ -8,7 +8,8 @@ function CreateNewProject() {
       name: "",
       description: "",
       project_admin: "",
-      members: [""]
+      members: [""],
+      boards: [""],
     });
   
     async function clkcreatedProject() {
