@@ -15,6 +15,13 @@ const Task = new mongoose.Schema(
         status: String,
         dueDate: String,
         priority: String,
+        comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "comment"}],
+        tasktype: String,
+        createdat: Date,
+        updatedat: Date,
+        resolvedat: Date,
+        closedat: Date,
+        auditlog: [{String} ],
     }
 );
 

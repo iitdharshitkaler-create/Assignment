@@ -8,7 +8,10 @@ import cookieParser from "cookie-parser";
 import boardData from "../database/board";
 import storyData from "../database/story";
 import taskData from "../database/task";
+import notificationData from "../database/notifications";
+import commentData from "../database/comment";
 import "../database/task";
+import mongoose from "mongoose";
 const app = express();
 const PORT = 3000;
 
@@ -19,7 +22,7 @@ const allowit = {
 }
 app.use(cors(allowit));
 app.use(express.json());
-app.use(cookieParser()); 
+app.use(cookieParser());
 
 function isLoggedIn(req: Request  & { user?: unknown }, res: Response, next: NextFunction){
     if(!req.cookies.token) return res.redirect("/");
@@ -83,21 +86,21 @@ interface Request_user extends Request {
   };
 }
 
-app.post('/createnew', isLoggedIn, async (req: Request_user, res: Response ) => {  // this defines a route 
+app.post('/createnew', isLoggedIn, async (req: Request_user, res: Response ) => {  
 
     const email = (req.user as { email: string }).email;
 
     console.log("Email from token:", email);
     const user = await userData.findOne({ email: (req.user as { email: string }).email });
-    const { name, description, project_admin} = req.body;
+    const { name, description } = req.body;
     if (!user) { return res.status(400).json({ error: "User not found" }); }
 
     const project = await projectData.create({
         global_admin: user._id, 
         name,
         description,
-        project_admin, //{ type: mongoose.Schema.Types.ObjectId, ref: "user"},
-        members: [ user._id ],
+        project_admin: [ ], //{ type: mongoose.Schema.Types.ObjectId, ref: "user"},
+        members: [ ],
         boards: [],
     });
     user.projects.push(project._id);
@@ -111,9 +114,9 @@ app.get('/projects', isLoggedIn, async (req: Request_user, res: Response) => {
 });
 
 app.get('/profile', isLoggedIn, async (req: Request_user, res: Response) => {
+    console.log("profile given")
     const user = await userData.findById((req.user as { userid: string }).userid).populate("projects");
-    res.json({ name: user?.name, avatar: user?.avatar });
-
+    res.json({_id: user?._id, name: user?.name, avatar: user?.avatar });
 });
 
 app.get('/project/:id', isLoggedIn, async (req: Request_user, res: Response) => {
@@ -163,13 +166,17 @@ app.get('/getprojectmembers/:id', async (req: Request, res: Response) => {
 }); 
 
 app.post('/addboardinproject', async (req: Request, res: Response ) => {  // this defines a route 
+    console.log("addboardinproject");
     const { project } = req.body;
     const board = await boardData.create({
         projectname: project._id,
         stories: [],
-        todo: [],
-        inprogress: [],
-        done: [],
+        columns: [
+            {name: "TO-DO", tasks: [] },
+            {name: "IN-PROGRESS", tasks: [] },
+            {name: "REVIEW", tasks: [] },
+            {name: "DONE", tasks: [] },
+        ]
     });
 
     await projectData.findByIdAndUpdate(
@@ -180,6 +187,7 @@ app.post('/addboardinproject', async (req: Request, res: Response ) => {  // thi
 });
 
 app.get('/getprojectboards/:id', async (req: Request, res: Response) => {
+    console.log("getprojectboards");
     const project = await projectData.findById(req.params.id).populate("boards");
     const boards = project?.boards;
     res.json({ boards });
@@ -190,7 +198,6 @@ app.post('/putstoryonboard/:id', async (req: Request, res: Response ) => {  // t
     const [story, index] = req.body;
     const projectId = req.params.id;
     const project = await projectData.findById(projectId);
-    console.log(project);
     if(!project) return res.status(404).json({ error: "Project not found" });
     const boardid = project.boards[Number(index)];
     if(!boardid) return res.status(404).json({ error: "Board not found" });
@@ -208,6 +215,7 @@ app.post('/putstoryonboard/:id', async (req: Request, res: Response ) => {  // t
 });
 
 app.post('/deleteboard/:id', async (req: Request, res: Response) => {
+    console.log("deleteboard");
     const { pos } = req.body;
     const projectId = req.params.id;
     const project = await projectData.findById(projectId);
@@ -220,40 +228,38 @@ app.post('/deleteboard/:id', async (req: Request, res: Response) => {
     res.json({ deleted: true });
 });
 
-app.post('/movestoryonboard/:id', async (req: Request, res: Response ) => {  // this defines a route 
-    const { boardIndex, storyIndex, from }  = req.body;
-    const projectId = req.params.id;
-    const project = await projectData.findById(projectId);
-    if(!project) return res.status(404).json({ error: "Project not found" });
-    const boardid = project.boards[Number(boardIndex)];
-    if(!boardid) return res.status(404).json({ error: "Board not found" });
+app.post('/movetaskonboard', async (req: Request, res: Response ) => {  // this defines a route 
+    console.log("movetaskonboard");
+    const { boardid, taskid, from, to }  = req.body;
+    console.log(from);
+    console.log(to);
     const board = await boardData.findById(boardid);
     if (!board) { return res.status(404).json({ error: "Board document missing" }); }
-    if(from === "todo") {
-        if(storyIndex >= board.todo.length) { return res.status(404).json({ error: "Story missing" }); }
-        const currstory: string | undefined = board.todo[Number(storyIndex)];
-        board.todo.splice(Number(storyIndex), 1);
-        board.inprogress.push(currstory as string);
-        await board.save();
-    } else {
-        if(storyIndex >= board.inprogress.length) { return res.status(404).json({ error: "Story missing" }); }
-        const currstory: string | undefined = board.inprogress[Number(storyIndex)];
-        board.inprogress.splice(Number(storyIndex), 1);
-        board.done.push(currstory as string);
-        await board.save();
-    }
+    const fromcolumn = board.columns[from as number];
+    const tocolumn = board.columns[to as number];
+    if(!tocolumn || !fromcolumn){return res.status(404).json({ error: "Board document missing" }); }
+    if(tocolumn.name === "INPREVIEW" && tocolumn.tasks.length >= 5 ) { return res.json({ error: "WIP limit reached for INPREVIEW column" }); }
+    fromcolumn.tasks = fromcolumn.tasks.filter( (id) => id.toString() !== taskid );
+    tocolumn.tasks.push(taskid);
+    await board.save();
+    await taskData.findByIdAndUpdate(taskid, {
+        status: tocolumn?.name
+    })
     res.json({ moved: true });
 });
 
 
 app.get('/board/:id/:boardpos', isLoggedIn, async (req: Request_user, res: Response) => {
+    console.log("board");
     const project = await projectData.findById(req.params.id);
     const boardid = await project?.boards[Number(req.params.boardpos)]
-    const board  = await boardData.findById(boardid).populate("stories");
+    const board  = await boardData.findById(boardid).populate("stories")
+    .populate("columns.tasks");
     res.json({ project, board });
 });
 
 app.get('/story/:storyid/:id', isLoggedIn, async (req: Request_user, res: Response) => {
+    console.log("story");
     const story = await storyData.findById(req.params.storyid).populate("tasks");
     const project = await projectData.findById(req.params.id);
     const projectname = project?.name;
@@ -263,8 +269,8 @@ app.get('/story/:storyid/:id', isLoggedIn, async (req: Request_user, res: Respon
 
 
 app.post('/addtaskinstory', async (req: Request, res: Response ) => {  // this defines a route 
-    console.log("here")
-    const { taskname, taskdescription, storyid } = req.body;
+    console.log("addtaskinstory")
+    const { taskname, taskdescription, tasktype, storyid } = req.body;
     const story = await storyData.findById(storyid);
     if(!story){ return  res.status(404).json({ error: "Document missing" });}
     const boardid = story.boardname;
@@ -274,17 +280,19 @@ app.post('/addtaskinstory', async (req: Request, res: Response ) => {  // this d
         storyname: story._id,
         name: taskname,
         description: taskdescription,
-        status: "todo",
+        tasktype: tasktype,
+        status: "TODO",
         dueDate:  "",
         priority: "low",
     });
     story.tasks.push(task._id);
-    console.log(story.tasks.length);
     await story.save();
     res.json({ added: true });
 });
 
 app.post('/removetaskinstory/:storyid', async (req: Request, res: Response ) => {  // this defines a route 
+    console.log("removetaskinstory");
+
     const { index } = req.body;
     const story = await storyData.findById(req.params.storyid);
     if(!story){ return  res.status(404).json({ error: "Document missing" });}
@@ -293,23 +301,262 @@ app.post('/removetaskinstory/:storyid', async (req: Request, res: Response ) => 
     res.json({ removed: true });
 });
 
-app.post('/updatetask', async (req: Request, res: Response) => {
-
+app.post('/updatetask', isLoggedIn, async (req: Request_user, res: Response) => {
+  try {
+    console.log("doneupadating2");
     const { _id, assigneeid, reporterid, status, priority, dueDate } = req.body;
-    console.log(req.body)
+    if (!req.user) {  console.log("here1");return res.status(401).json({ error: "Unauthorized" }); }
+    const senderId = new mongoose.Types.ObjectId(req.user.userid);
+    const task = await taskData.findById(_id);
+    if (!task) { return res.status(404).json({ error: "Task not found" }); }
     const Auser = await userData.findById(assigneeid);
-    const assignee = Auser?.name;
     const Ruser = await userData.findById(reporterid);
-    const reporter = Ruser?.name;
+    if (!Auser || !Ruser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const assignee = Auser.name;
+    const reporter = Ruser.name;
+    const assigneeChanged = task.assigneeid?.toString() !== assigneeid;
+    const reporterChanged = task.reporterid?.toString() !== reporterid;
     await taskData.findByIdAndUpdate(_id, {
-        assigneeid,
-        assignee,
-        reporterid,
-        reporter,
-        status,
-        priority,
-        dueDate
+      assigneeid,
+      assignee,
+      reporterid,
+      reporter,
+      status,
+      priority,
+      dueDate
     });
-
+    if (assigneeChanged) {
+      const message = await notificationData.create({
+        Message: "You are assigned a task",
+        sendto: Auser._id,
+        sendfrom: senderId,
+        task: task._id,
+        board: task.boardname ?? null,
+        story: task.storyname ?? null,
+        project: null,
+        date: new Date(),
+        read: false
+      });
+      Auser.notifications.push(message._id)
+      await Auser.save();
+    }
+    if (reporterChanged) {
+      const message = await notificationData.create({
+        Message: "You are reporter of a task",
+        sendto: Ruser._id,
+        sendfrom: senderId,
+        task: task._id,
+        board: task.boardname ?? null,
+        story: task.storyname ?? null,
+        project: null,
+        date: new Date(),
+        read: false
+      });
+      Ruser.notifications.push(message._id)
+      await Ruser.save();
+    }
     res.json({ updated: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Server error" });
+    }
 });
+
+app.post('/addstorytoboard', async (req: Request, res: Response) => {
+    console.log("addstorytoboard");
+    const { storyid } = req.body;
+    const story = await storyData
+        .findById(storyid)
+        .populate("tasks");
+    if (!story) {
+        return res.status(404).json({ error: "Story not found" });
+    }
+    const board = await boardData.findById(story.boardname);
+    if (!board) {
+        return res.status(404).json({ error: "Board not found" });
+    }
+    const tasks = story.tasks as mongoose.Types.ObjectId[];
+    for (const task of tasks) {
+        const column = board.columns[0];
+        if(!column) continue;
+        column.tasks.push(task._id)
+    }
+    await board.save();
+    res.json({ added: true });
+});
+
+app.get('/getnotifications/:id', isLoggedIn, async (req: Request_user, res: Response) => {
+    console.log("getting notificaitons");
+    const user = await userData.findById(req.params.id).populate("notifications");
+    const notifications  = user?.notifications;
+    res.json({ notifications });
+});
+
+app.get('/taskcomments/:taskid', isLoggedIn, async (req,res)=>{
+    const { taskid } = req.params;
+    const task = await taskData
+        .findById(taskid)
+        .populate({
+            path: "comments",
+            populate: [
+                { path: "user" },
+                { path: "mentions" }
+            ]
+        });
+    if(!task){
+        return res.status(404).json({ error: "Task not found" });
+    }
+    res.json({ comments: task.comments });
+});
+
+app.post('/addcomment', isLoggedIn, async (req: Request_user ,res: Response)=>{
+    console.log("addingcomment")
+    const { taskid, text, mentions } = req.body
+    if(!req.user){ return res.status(401).json({ error: "Unauthorized" }); }
+    const comment = await commentData.create({
+        task: taskid,
+        user: req.user.userid,
+        text,
+        mentions,
+        createdAt: new Date(),
+        updatedAt: new Date()
+    })
+    const task = await taskData.findById(taskid);
+    if(!task) {return res.status(401).json({ error: "Unauthorized" }); }
+    task.comments.push(comment._id)
+    await task.save()
+    for(let i = 0; i < mentions.length; i ++) {
+        const message = await notificationData.create({
+            Message: "You are mentioned",
+            sendto: mentions[i],
+            sendfrom: req.user.userid,
+            task: taskid,
+            board: task.boardname ?? null,
+            story: task.storyname ?? null,
+            project: null,
+            date: new Date(),
+            read: false
+        });
+        const user = await userData.findById(mentions[i]);
+        user?.notifications.push(message._id);
+        user?.save();
+    }
+    res.json({ added:true })
+})
+
+app.post('/addcomment', isLoggedIn, async (req: Request_user ,res: Response)=>{
+    console.log("addingcomment")
+    const { taskid, text, mentions } = req.body
+    if(!req.user){ return res.status(401).json({ error: "Unauthorized" }); }
+    const comment = await commentData.create({
+        task: taskid,
+        user: req.user.userid,
+        text,
+        mentions,
+        createdAt: new Date(),
+        updatedAt: new Date()
+    })
+    const task = await taskData.findById(taskid);
+    task?.comments.push(comment._id)
+    await task?.save()
+    res.json({ added:true })
+})
+
+app.post('/deletecomment', isLoggedIn, async (req: Request_user ,res: Response)=>{
+    console.log("deletingcomment")
+    const { commentid } = req.body
+    const comment = await commentData.findById(commentid);
+    const task = await taskData.findById(comment?.task);
+    if(!task || !comment) {return res.status(401).json({ error: "Unauthorized" });}
+    task.comments = task?.comments.filter((id) => id.toString() !== comment._id.toString())
+    await task.save();
+    await commentData.findByIdAndDelete(commentid);
+    res.json({ deleted :true })
+})
+
+app.post('/editcomment', isLoggedIn, async (req: Request_user ,res: Response)=>{
+    console.log("editingcomment")
+    const { editingId, editText } = req.body
+    const comment = await commentData.findById(editingId);
+    if( !comment || !comment.user || !req.user) {return res.status(401).json({ error: "Unauthorized" });}
+    if(comment.user.toString() !== req.user.userid){
+        return res.status(403).json({ error: "Not allowed" });
+    }
+    comment.text = editText;
+    comment.updatedAt = new Date();
+    await comment.save()
+    res.json({ edited :true })
+})
+
+app.post('/deletecolumn', isLoggedIn, async (req: Request_user ,res: Response)=>{
+    console.log("deletingcolumn")
+    const { boardid, pos} = req.body
+    const board = await boardData.findById(boardid);
+    if(!board) {return res.status(401).json({ error: "Unauthorized" });}
+    board.columns.splice(pos, 1);
+    board.save();
+    console.log("done")
+    res.json({ deletedcolumn :true })
+})
+
+app.post('/renamecolumn', isLoggedIn, async (req: Request_user ,res: Response)=>{
+    console.log("renamecolumn")
+    const { newname, boardid, columnpos } = req.body
+    const board = await boardData.findById(boardid);
+    const pos = Number(columnpos);
+    if(!board || !board.columns) {return res.status(401).json({ error: "Unauthorized" });}
+    if(pos == -1) {
+        board.columns.push({name: newname, tasks: []});
+    } else {
+        if(!board.columns[pos]) {return res.status(401).json({ error: "Unauthorized" });}
+        board.columns[pos].name = newname;
+    }
+    console.log("done")
+    board.save();
+    res.json({ deletedcolumn :true })
+})
+
+app.post('/addadminproject', isLoggedIn, async (req: Request_user ,res: Response)=>{
+    console.log("addinig admin in the porject")
+    const { id, project_admin } = req.body
+    const project = await projectData.findById(id);
+    const user = await userData.findById(project_admin);
+    const senduser = req.user;
+    if(!senduser || !user || !project || !project.project_admin) { return res.status(401).json({ error: "Unauthorized" });}
+    project.project_admin.push(user._id);
+    const message = await notificationData.create({
+        Message: "You are project admin of a project",
+        sendto: user._id,
+        sendfrom: senduser.userid,
+        task: null,
+        board: null,
+        story: null,
+        project: project._id,
+        date: new Date(),
+        read: false
+      });
+    user.notifications.push(message._id);
+    user.save();
+    project.save();
+    res.json({ deletedcolumn :true })
+})
+
+
+app.get('/getprojectadmins/:id', async (req: Request, res: Response) => {
+    console.log("getting porjectadmins");
+    const project = await projectData.findById(req.params.id).populate("project_admin");
+    if(!project) { return res.status(401).json({ error: "Unauthorized" }); }
+    const project_admins = project.project_admin;
+    res.json({ project_admins });
+}); 
+
+app.get('/allmembersinproject/:id', async (req: Request, res: Response) => {
+    console.log("getting porject members");
+    const project = await projectData.findById(req.params.id).populate("members");
+    if(!project) { return res.status(401).json({ error: "Unauthorized" }); }
+    const projectmembers = project.members;
+    res.json({ projectmembers });
+}); 
+

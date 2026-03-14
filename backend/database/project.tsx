@@ -1,4 +1,5 @@
 import mongoose from "mongoose"
+mongoose.connect("mongodb://127.0.0.1:27017/project6")
 
 const Project = new mongoose.Schema(
     {
@@ -9,10 +10,12 @@ const Project = new mongoose.Schema(
         },
         name: String,
         description: String,
-        project_admin: String, //{ type: mongoose.Schema.Types.ObjectId, ref: "user"},
-        members: [ {type: mongoose.Schema.Types.ObjectId, ref: "user"}], //[{ type: mongoose.Schema.Types.ObjectId, ref: "user"}],
+        project_admin: [{ type: mongoose.Schema.Types.ObjectId, ref: "user"}], //{ type: mongoose.Schema.Types.ObjectId, ref: "user"}]
+        members: [{type: mongoose.Schema.Types.ObjectId, ref: "user"}], //[{ type: mongoose.Schema.Types.ObjectId, ref: "user"}],
         // members are the viewers 
-        boards: [{ type: mongoose.Schema.Types.ObjectId, ref: "board" }]
+        boards: [{ type: mongoose.Schema.Types.ObjectId, ref: "board" }],
+        creationtime: Date,
+        updatedat: Date,
     }
 );
 

@@ -8,6 +8,7 @@ import CreateNewProject from "./pages/projectpage/createnew"
 import ProjectInfo from "./pages/projectpage/projectinfo"
 import BoardInfo from "./pages/projectpage/boardinfo"
 import StoryInfo from "./pages/story/storypage"
+import CommentInfo from "./pages/comments/commentpage"
 
 function App() {
   return (
@@ -22,7 +23,8 @@ function App() {
         <Route path="/projectinfo/:id" element={<ProjectInfo />} />
         <Route path="/projectinfo/:id/:boardid/:boardpos" element={<BoardInfo />} />
         <Route path="/storyinfo/:id/:boardid/:boardpos/:storyid" element={<StoryInfo />} />
-        
+        <Route path="/comment/:id/:boardid/:boardpos/:storyid/:taskid" element={<CommentInfo />} />
+
       </Routes>
     </BrowserRouter>
   )

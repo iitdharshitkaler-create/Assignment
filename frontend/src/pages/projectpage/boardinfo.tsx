@@ -9,12 +9,31 @@ interface User {
     name: string;
     _id: string;
 }
+
+interface Column {
+    name: string;
+    tasks: Task[];
+}
+
+interface Task {
+    _id: string;
+    boardname: string;
+    storyname: string;
+    name: string;
+    description: string; 
+    assigneeid: string;
+    assignee: string;
+    reporterid: string;
+    reporter: string;
+    status: string;
+    dueDate: string;
+    priority: string;
+}
+
 interface Board {
     _id: string;
     projectname: string;
-    todo: [string];
-    inprogress: [string];
-    done: [string];
+    columns: {name: string, tasks: Task[]}[]
     stories: Story[ ];
     __v: number;
 }
@@ -36,9 +55,7 @@ function BoardInfo() {
     const[board, setBoard] = useState<Board>({
         _id: "",
         projectname: "",
-        todo: [""],
-        inprogress: [""],
-        done: [""],
+        columns: [],
         stories: [],
         __v: 0,
     })
@@ -129,41 +146,41 @@ function BoardInfo() {
         setStoryform(true);
     }
 
-    const [dragfrom, setDragfrom] = useState("");
+    const [dragTaskId, setDragTaskId] = useState<string | null>(null);
+    const [dragFrom, setDragfrom] = useState<number | null>(null);
 
-    const [dragIndex, setDragIndex] = useState<number | null>(null);
-    const [dragBoardPos, setDragBoardPos] = useState<number | null>(null);
-
-    function handleDragStart(index: number, pos: number) {
-        setDragIndex(index);
-        setDragBoardPos(pos);
+    function handleDragStart(taskid: string, columnpos: number) {
+        setDragTaskId(taskid);
+        setDragfrom(columnpos);
     }
 
     function allowDrop(e: React.DragEvent) {
         e.preventDefault();
     }
 
-    async function handleDrop() {
-        if(dragIndex === null || dragBoardPos === null) return;
-        try{
-            await fetch(`http://localhost:3000/movestoryonboard/${id}`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    boardIndex: dragBoardPos,
-                    storyIndex: dragIndex,
-                    from: dragfrom,
-                })
-            });
-        } catch(error){
-            console.log("Server connection failed:", error);
+    async function handleDrop(columnpos: number) {
+        if(dragFrom !== null && (columnpos - dragFrom) == 1) {
+             try{
+                await fetch(`http://localhost:3000/movetaskonboard`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        boardid: board._id,
+                        taskid: dragTaskId,
+                        from: dragFrom,
+                        to: columnpos
+                    })
+                });
+                loadBoard();
+            } catch(error){
+                console.log("Server connection failed:", error);
+            }
         }
-        
-        setDragIndex(null);
-        setDragBoardPos(null);
+        setDragTaskId(null);
+        setDragfrom(null);
         loadBoard();
     }
 
@@ -191,9 +208,82 @@ function BoardInfo() {
         setShow(prev => !prev);
     }
 
+    async function clkaddtoboard(storyid: string) {
+        try {
+            await fetch("http://localhost:3000/addstorytoboard/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "include",
+                body: JSON.stringify({ storyid })
+            });
+            loadBoard();   // reload board data
+        } catch (error) {
+            console.log("Server connection failed:", error);
+        }
+    }
+
+    const [newname, setNewname] = useState("");
+    const [columnform, setColumnform] = useState(false);
+    const [renameform, setRenameform] = useState(false);
+    const [columnpos, setColumnpos] = useState(0);
+
+    function edittheboard() {
+        const boardIsEmpty = board.columns.every(column => column.tasks.length === 0);
+        if(boardIsEmpty) {
+            setColumnform(true);
+        }
+    }
+    
+    async function donerenaming(){
+        setRenameform(false);
+        try {
+            await fetch("http://localhost:3000/renamecolumn", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "include",
+                body: JSON.stringify({ newname, boardid, columnpos})
+            });
+            loadBoard();
+            setNewname("");   // reload board data
+        } catch (error) {
+            console.log("Server connection failed:", error);
+        }
+        setColumnform(false);
+    }
+    
+    function clkrenamecolumn(pos: number){
+        setRenameform(true);
+        setColumnpos(pos);
+    }
+
+    async function clkdeletecolumn(pos: number){
+        try {
+            await fetch("http://localhost:3000/deletecolumn", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "include",
+                body: JSON.stringify({ boardid, pos})
+            });
+            loadBoard();   // reload board data
+            setColumnform(false);
+        } catch (error) {
+            console.log("Server connection failed:", error);
+        }
+    }
+
+    function clkaddcolumn(){
+        setRenameform(true);
+        setColumnpos(-1);
+    }
 	return (
 
-	  <div className="container">
+	<div className="container">
         <h1>Projet: {project.name}</h1>
         <h1>Board {boardpos} </h1>
         <h2>{boardid}</h2>
@@ -237,14 +327,12 @@ function BoardInfo() {
     <br></br>
     <div>
         <div>
-
             { storyform && 
                 <div> 
                     <form method="post">
                         Story: <input onChange={(e) => setNewstory(e.target.value)}/></form>
                         <button onClick={putstoryonboard}>done</button>
                     </div>}
-
             <div>Stories
                 <button onClick={() => clkaddstory(Number(boardpos))}> add story  </button>
                 <button> put story on board</button>
@@ -253,21 +341,21 @@ function BoardInfo() {
                     <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
                     <thead>
                         <tr style = {{textAlign : 'left',borderBottom : '1px solidd #eee'}}>
-                        <th style = {{padding  :'12px 0' }}>Name</th>
-                        <th style = {{padding : '12px 0' }}>Tasks</th>
-                        <th style = {{padding : '12px 0' }}>Status</th>
-                        <th style = {{padding : '12px 0' }}>Actions</th>
+                        <th style = {{padding  :'12px 0' }}> Name </th>
+                        <th style = {{padding : '12px 0' }}> Tasks </th>
+                        <th style = {{padding : '12px 0' }}> Status </th>
+                        <th style = {{padding : '12px 0' }}> Actions </th>
                         </tr>
                     </thead>
                     <tbody>
                         {board.stories?.map((story) => (
-                        <tr key={story._id}>
+                        <tr key={story._id} >
                             <td>
                                 <a href={`/storyinfo/${id}/${board._id}/${boardpos}/${story._id}`}> {story.storyname} </a></td>
-                            <td>{story.tasks?.length ?? 0} </td>
-                            <td>{story.status}</td>
+                            <td> {story.tasks?.length ?? 0} </td>
+                            <td> {story.status} </td>
                             <td>
-                                <button>add to board</button>
+                                <button onClick={() => clkaddtoboard(story._id)}> Add to Board</button>
                                 <button>Del story</button>
                             </td>
                         </tr>
@@ -276,27 +364,32 @@ function BoardInfo() {
                     </table>
                  </div>
             </div>
-
-            <div style={{backgroundColor: "yellow"}}> Kanban Board
-                <div className="to-do" style={{ backgroundColor: "red" }}> TO-DO
-                {board.todo.map((story, index) => (
-                    <div key={index} draggable onDragStart={() => {handleDragStart(index, Number(boardpos)); setDragfrom("todo")}}> {story} </div>
+            <div style={{backgroundColor: "yellow"}}> Kanban Board {board.columns.map((column, pos) => (
+                    <div key = {pos} style={{ backgroundColor: "red" }} onDragOver={allowDrop} onDrop={() => handleDrop(pos)}> {column.name}
+                    {column.tasks.map((task, index) => (
+                        <div key={index} draggable onDragStart={() => {handleDragStart(task._id, pos)}}> {task.name} </div>
+                        ))}
+                    {columnform &&
+                    <div>
+                        <button onClick={() => clkrenamecolumn(pos)}>Rename</button>
+                        <button onClick={() => clkdeletecolumn(pos)}>Delete</button>
+                    </div>}
+                    </div>
                     ))}
-                </div>
-
-                <div className="in-progress" style={{ backgroundColor: "blue" }} onDragOver={allowDrop} onDrop={handleDrop} > IN-PROGRESS
-                    {board.inprogress.map((story, index) => (
-                        <div key={index} draggable onDragStart={() => {handleDragStart(index, Number(boardpos)); setDragfrom("inprogress")}} > {story} </div>
-                    ))}
-                </div>
-
-                <div className="done" style={{ backgroundColor: "green" }} onDragOver={allowDrop} onDrop={handleDrop} > DONE
-                {board.done.map((story, index) => (
-                    <div key={index} > {story}</div>
-                ))}
+                    {renameform && 
+                        <div>
+                            <form>
+                                <input value={newname} onChange={(e) => setNewname(e.target.value)} />
+                            </form>
+                            <button onClick={donerenaming}>Done</button>
+                        </div>
+                        }
+                    {columnform &&
+                    <button onClick={clkaddcolumn}>Add column</button>}
             </div>
-            </div>
+            
         </div>
+        <button onClick={edittheboard}>Edit board</button>
     </div>
     
 	</div>

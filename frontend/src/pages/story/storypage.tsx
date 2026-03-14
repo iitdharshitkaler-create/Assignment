@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 interface Board {
     _id: string;
@@ -29,6 +30,7 @@ interface Task {
     status: string;
     dueDate: string;
     priority: string;
+    tasktype: string;
 }
 
 interface Story {
@@ -65,6 +67,7 @@ function StoryInfo() {
 
     const [taskname, setTaskname] = useState("");
     const [taskdescription, setTaskdescription ] = useState("");
+    const [tasktype, setTasktype ] = useState("");
     const [taskform, setTaskform] = useState(false);
     async function clkdone(){
         try{
@@ -74,7 +77,7 @@ function StoryInfo() {
                 "Content-Type": "application/json"
             },
             credentials: "include",
-            body: JSON.stringify({ taskname, taskdescription, storyid  })
+            body: JSON.stringify({ taskname, taskdescription, tasktype, storyid  })
             });
         } catch (error) {
             console.log("Server connection failed:", error);
@@ -112,7 +115,8 @@ function StoryInfo() {
         reporter: "",
         status: "",
         dueDate: "",
-        priority: ""
+        priority: "",
+        tasktype: "",
     })
     const [editform, SetEditform] = useState(false);
     async function editdone(){
@@ -129,21 +133,21 @@ function StoryInfo() {
             console.log("Server connection failed:", error);
         }
         SetEditform(false);
-        loadStories();
+        await loadStories();
     }
     function clkedittask(task: Task){
         setEdittask(task);
         SetEditform(true);
     }
 
-    const [allusers, setAllusers] = useState<User[]>([]);
+    const [allmembers, setAllmembers] = useState<User[]>([]);
     useEffect(() => {
-        fetch(`http://localhost:3000/allusers`, {
+        fetch(`http://localhost:3000/allmembersinproject/${id}`, {
         credentials: "include"
         })
         .then(res => res.json())
         .then(data => {
-            setAllusers(data.userlist);
+            setAllmembers(data.projectmembers);
         });
     }, []); 
 
@@ -160,30 +164,29 @@ function StoryInfo() {
                     <form method="post">
                         Name: <input onChange={(e) => setTaskname(e.target.value)}/></form>
                         <form>Description: <input onChange={(e) => setTaskdescription(e.target.value)} /></form>
+                        <form>TaskTye:<select value={tasktype} onChange={(e) => setTasktype(e.target.value)} >
+                        <option>Normal</option>
+                        <option>Bug</option>
+                        </select></form>
                         <button onClick={clkdone}>done</button>
                     </div>}
             { editform && 
                 <div> 
                     <form> Assignee: <select value={edittask.assigneeid} onChange={(e) => setEdittask({ ...edittask, assigneeid: e.target.value })}>
                          <option value="">Select Assignee</option>
-                         {allusers.map(user => (
+                         {allmembers.map(user => (
                             <option key={user._id} value={user._id}>
                                 {user.name}
                             </option>
                         ))}
                         </select></form>
-                    <form> Reporter: <select value={edittask.assigneeid} onChange={(e) => setEdittask({ ...edittask, reporterid: e.target.value })}>
+                    <form> Reporter: <select value={edittask.reporterid} onChange={(e) => setEdittask({ ...edittask, reporterid: e.target.value })}>
                          <option value="">Select Assignee</option>
-                         {allusers.map(user => (
+                         {allmembers.map(user => (
                             <option key={user._id} value={user._id}>
                                 {user.name}
                             </option>
                         ))}
-                        </select></form>
-                    <form> Status: <select value={edittask.status} onChange={(e) => setEdittask({...edittask, status: e.target.value})} >
-                        <option>todo</option>
-                        <option>inprogess</option>
-                        <option>done</option>
                         </select></form>
                     <form> Priority: <select value={edittask.priority} onChange={(e) => setEdittask({...edittask, priority: e.target.value})}>
                         <option>Low</option>
@@ -199,8 +202,9 @@ function StoryInfo() {
             <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
             <thead>
                 <tr style = {{textAlign : 'left',borderBottom : '1px solidd #eee'}}>
-                <th style = {{padding  :'12px 0' }}>Name</th>
+                <th style = {{padding : '12px 0' }}>Name</th>
                 <th style = {{padding : '12px 0' }}>Description</th>
+                <th style = {{padding : '12px 0' }}>TaskType</th>
                 <th style = {{padding : '12px 0' }}>Assignee</th>
                 <th style = {{padding : '12px 0' }}>Reporter</th>
                 <th style = {{padding : '12px 0' }}>Status</th>
@@ -214,17 +218,18 @@ function StoryInfo() {
                 <tr key={task._id}>
                     <td>{task.name}</td>
                     <td>{task.description}</td>
+                    <td>{task.tasktype}</td>
                     <td>{task.assignee}</td>
                     <td>{task.reporter}</td>
                     <td>{task.status}</td>
                     <td>{task.dueDate}</td>
                     <td>{task.priority}</td>
-                    <td><button onClick={() => clkedittask(task)}>Edit</button><button onClick={() => clkremovetask(index)}>Remove</button></td>
+                    <td><button onClick={() => clkedittask(task)}>Edit</button><button onClick={() => clkremovetask(index)}>Remove</button> <div><Link to={`/comment/${id}/${boardid}/${boardpos}/${storyid}/${task._id}`}> Comments </Link></div> </td>
                 </tr>
                 ))}
             </tbody>
             </table>
-            <button onClick={addtask}>Add Task</button>
+            <button onClick={addtask}> Add Task </button>
         </div>
 	);
   }

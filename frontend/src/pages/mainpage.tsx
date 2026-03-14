@@ -3,12 +3,63 @@ import styles from "./loginpage.module.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-function ProjectDashboard() {
-  interface Project {
-    _id: string;
+interface Project {
+  _id: string;
+  name: string;
+  description: string;
+}
+interface User {
+  avatar: string;
     name: string;
-    description: string;
-  }
+    _id: string;
+}
+ 
+interface Task {
+    _id: string;
+    boardname: string;
+    storyname: string;
+    name: string;
+    description: string; 
+    assigneeid: string;
+    assignee: string;
+    reporterid: string;
+    reporter: string;
+    status: string;
+    dueDate: string;
+    priority: string;
+}
+
+interface Board {
+    _id: string;
+    projectname: string;
+    todo: Task[];
+    inprogress: Task[];
+    done: Task[];
+    stories: Story[ ];
+    __v: number;
+}
+
+interface Story {
+    _id: string;
+    boardname: string;
+  storyname: string;
+  status: string;
+  tasks: [string];
+}
+interface Notification {
+    _id: string;
+    Message: string,
+    sendto: User,
+    sendfrom: User,
+    task: Task,
+    board: Board,
+    project: Project,
+    story: Story,
+    date: string,
+    read: boolean,
+}
+
+function ProjectDashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   useEffect(() => {
     fetch("http://localhost:3000/projects", {
@@ -20,7 +71,8 @@ function ProjectDashboard() {
       });
   }, []);
 
-  const [user, setUser] = useState({
+  const [user, setUser] = useState<User>({
+    _id: "",
     name: "",
     avatar: "",
   }); 
@@ -31,6 +83,7 @@ function ProjectDashboard() {
       .then(res => res.json())
       .then(data => {
         setUser({
+          _id: data._id,
           name: data.name,
           avatar: data.avatar
         });
@@ -57,6 +110,22 @@ function ProjectDashboard() {
       navigate("/createnew");
   }
 
+  const [messages, setMessages] = useState<Notification[]>([]);
+
+  async function fetchnotifications(){
+    fetch(`http://localhost:3000/getnotifications/${user._id}`, {
+        credentials: "include"
+        }).then(res => res.json())
+        .then(data => {
+            setMessages(data.notifications);
+        });
+  }
+  useEffect(() => {
+  if(user._id){
+    fetchnotifications();
+  }
+}, [user._id])
+
   return (
     <div className={styles.container}>
       <header>
@@ -64,8 +133,15 @@ function ProjectDashboard() {
       </header>
       <div>
         <div>Name: {user.name} </div>
-        <div>Avatar: {user.avatar} </div>
-
+        <div>Avatar: <img src={`/public/${user.avatar}.jpeg`} height={"40px"}/> </div>
+      </div>
+      <div>
+        notifications
+        <div>
+           {messages.map((message) => (
+                    <div> {message.Message} </div>
+                    ))}
+        </div>
       </div>
       <main>
         <nav>

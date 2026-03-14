@@ -7,15 +7,11 @@ const User = new mongoose.Schema(
         email: String,
         password: String,
         avatar: String,
-        projects: [{
-            type: mongoose.Schema.Types.ObjectId, ref: "project"
-        }],
-        projectAdmin: [{ type: mongoose.Schema.Types.ObjectId, ref: "project"
-        }],
-        projectMember: [{type: mongoose.Schema.Types.ObjectId, ref: "project"
-        }],
-        projectViewer: [{type: mongoose.Schema.Types.ObjectId, ref: "project"
-        }]
+        projects: [{ type: mongoose.Schema.Types.ObjectId, ref: "project" }],
+        projectAdmin: [{ type: mongoose.Schema.Types.ObjectId, ref: "project" }],
+        projectMember: [{type: mongoose.Schema.Types.ObjectId, ref: "project" }],
+        projectViewer: [{type: mongoose.Schema.Types.ObjectId, ref: "project" }],
+        notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "notification"}],
     }
 )
 

@@ -1,13 +1,14 @@
 import mongoose from "mongoose"
+mongoose.connect("mongodb://127.0.0.1:27017/project6")
 
 const Board = new mongoose.Schema(
     {
         projectname: { type: mongoose.Schema.Types.ObjectId, ref: "project"},//{type: mongoose.Schema.Types.ObjectId, ref: "user"//},
         stories: [ { type: mongoose.Schema.Types.ObjectId, ref: "story" } ],
-        todo: [ String ], 
-        inprogress: [ String ],
-        done: [ String ],
-        // later we have to convert these into the task,
+        columns: [{ 
+            name: String, 
+            tasks:[ { type: mongoose.Schema.Types.ObjectId, ref: "task" } ]
+        }],
     }
 );
 
