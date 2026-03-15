@@ -153,26 +153,29 @@ function StoryInfo() {
 
 	return (
         
-        <div> 
-            <h1>Projectname: {projectname}</h1>
-            <h1>Board {boardpos}</h1>
-            <h1>Story: {story.storyname}</h1>
-            <h1>Status: {story.status}</h1>
-            <h1>Tasks:</h1>
+        <div className={styles.container}> 
+			<div className={styles.textCard}>
+	            <h1>Projectname: {projectname}</h1>
+	            <h1>Board {boardpos}</h1>
+	            <h1>Story: {story.storyname}</h1>
+	            <h1>Status: {story.status}</h1>
+	            <h1>Tasks:</h1>
+			</div>
+			<div className={styles.textCard} >
             { taskform && 
-                <div> 
+                <div style={{lineHeight:"170%"}}> 
                     <form method="post">
-                        Name: <input onChange={(e) => setTaskname(e.target.value)}/></form>
-                        <form>Description: <input onChange={(e) => setTaskdescription(e.target.value)} /></form>
-                        <form>TaskTye:<select value={tasktype} onChange={(e) => setTasktype(e.target.value)} >
+                        Name: <input className={styles.textButton} onChange={(e) => setTaskname(e.target.value)}/></form>
+                        <form>Description: <input className={styles.textButton} onChange={(e) => setTaskdescription(e.target.value)} /></form>
+                        <form>TaskTye:<select className={styles.textButton} value={tasktype} onChange={(e) => setTasktype(e.target.value)} >
                         <option>Normal</option>
                         <option>Bug</option>
                         </select></form>
-                        <button onClick={clkdone}>done</button>
+                        <button className={styles.actionButton} onClick={clkdone}>done</button>
                     </div>}
             { editform && 
-                <div> 
-                    <form> Assignee: <select value={edittask.assigneeid} onChange={(e) => setEdittask({ ...edittask, assigneeid: e.target.value })}>
+                <div style={{lineHeight: "30px"}}> 
+                    <form> <span style={{wordSpacing:"30px"}}>Assignee: </span><select className={styles.textButton} value={edittask.assigneeid} onChange={(e) => setEdittask({ ...edittask, assigneeid: e.target.value })}>
                          <option value="">Select Assignee</option>
                          {allmembers.map(user => (
                             <option key={user._id} value={user._id}>
@@ -180,7 +183,7 @@ function StoryInfo() {
                             </option>
                         ))}
                         </select></form>
-                    <form> Reporter: <select value={edittask.reporterid} onChange={(e) => setEdittask({ ...edittask, reporterid: e.target.value })}>
+                    <form> style={{wordSpacing:"33px"}}>Reporter: </span> <select className={styles.textButton}  value={edittask.reporterid} onChange={(e) => setEdittask({ ...edittask, reporterid: e.target.value })}>
                          <option value="">Select Assignee</option>
                          {allmembers.map(user => (
                             <option key={user._id} value={user._id}>
@@ -188,16 +191,16 @@ function StoryInfo() {
                             </option>
                         ))}
                         </select></form>
-                    <form> Priority: <select value={edittask.priority} onChange={(e) => setEdittask({...edittask, priority: e.target.value})}>
+                    <form> <span style={{wordSpacing:"45px"}}>Priority: </span> <select className={styles.textButton}  value={edittask.priority} onChange={(e) => setEdittask({...edittask, priority: e.target.value})}>
                         <option>Low</option>
                         <option>Medium</option>
                         <option>High</option>
                         <option>Critcal</option>
                         </select></form>
                     <form>
-                        Duedate:
-                        <input type="date" value={edittask.dueDate} onChange={(e) => setEdittask({ ...edittask, dueDate: e.target.value }) } /> </form>
-                    <button onClick={editdone}>done</button>
+                         <span style={{wordSpacing:"34px"}}>Duedate: </span>
+                        <input className={styles.textButton} type="date" value={edittask.dueDate} onChange={(e) => setEdittask({ ...edittask, dueDate: e.target.value }) } /> </form>
+                    <button className={styles.actionButton}  onClick={editdone}>done</button>
                 </div>}
             <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
             <thead>
@@ -224,13 +227,16 @@ function StoryInfo() {
                     <td>{task.status}</td>
                     <td>{task.dueDate}</td>
                     <td>{task.priority}</td>
-                    <td><button onClick={() => clkedittask(task)}>Edit</button><button onClick={() => clkremovetask(index)}>Remove</button> <div><Link to={`/comment/${id}/${boardid}/${boardpos}/${storyid}/${task._id}`}> Comments </Link></div> </td>
+                    <td><button className={styles.actionButton}  onClick={() => clkedittask(task)}>Edit</button>
+						<button className={styles.actionButton}  onClick={() => clkremovetask(index)}>Remove</button>
+						<div><Link to={`/comment/${id}/${boardid}/${boardpos}/${storyid}/${task._id}`}> Comments </Link></div> </td>
                 </tr>
                 ))}
             </tbody>
             </table>
-            <button onClick={addtask}> Add Task </button>
+            <button className={styles.actionButton}  onClick={addtask}> Add Task </button>
         </div>
+		</div>
 	);
   }
   
