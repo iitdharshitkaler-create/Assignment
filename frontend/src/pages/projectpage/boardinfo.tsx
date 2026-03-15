@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-
+import styles from "./boardinfo.module.css";
 interface Project {
   name: string;
   description: string;
@@ -295,7 +295,7 @@ function BoardInfo() {
         show && <div>
     <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
     <thead>
-        <tr style = {{textAlign : 'left',borderBottom : '1px solidd #eee'}}>
+        <tr style = {{textAlign : 'left',borderBottom : '1px solid #eee'}}>
         <th style = {{padding  :'12px 0' }}>Name</th>
         <th style = {{padding : '12px 0' }}>Role</th>
         <th style = {{padding : '12px 0' }}>Associated stories/task</th>
@@ -344,7 +344,7 @@ function BoardInfo() {
                 <div>
                     <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
                     <thead>
-                        <tr style = {{textAlign : 'left',borderBottom : '1px solidd #eee'}}>
+                        <tr style = {{textAlign : 'left',borderBottom : '1px solid #eee'}}>
                         <th style = {{padding  :'12px 0' }}> Name </th>
                         <th style = {{padding : '12px 0' }}> Tasks </th>
                         <th style = {{padding : '12px 0' }}> Status </th>
@@ -368,33 +368,36 @@ function BoardInfo() {
                     </table>
                  </div>
             </div>
-            <div style={{backgroundColor: "yellow"}}> Kanban Board {board.columns.map((column, pos) => (
+			<div className={styles.loginCard}>
+            <div style={{backgroundColor: "yellow",color:"black",borderRadius:"8px"}}> Kanban Board {board.columns.map((column, pos) => (
+					<div className={styles.tableWrapper} >
                     <div key = {pos} style={{ backgroundColor: "red" }} onDragOver={allowDrop} onDrop={() => handleDrop(pos)}> {column.name}
                     {column.tasks.map((task, index) => (
                         <div key={index} draggable onDragStart={() => {handleDragStart(task._id, pos)}}> {task.name} </div>
                         ))}
                     {columnform &&
                     <div>
-                        <button onClick={() => clkrenamecolumn(pos)}>Rename</button>
-                        <button onClick={() => clkdeletecolumn(pos)}>Delete</button>
+                        <button className={styles.actionButton} onClick={() => clkrenamecolumn(pos)}>Rename</button>
+                        <button className={styles.actionButton} onClick={() => clkdeletecolumn(pos)}>Delete</button>
                     </div>}
                     </div>
+					</div>
                     ))}
                     {renameform && 
                         <div>
                             <form>
                                 <input value={newname} onChange={(e) => setNewname(e.target.value)} />
                             </form>
-                            <button onClick={donerenaming}>Done</button>
+                            <button className={styles.actionButton} onClick={donerenaming}>Done</button>
                         </div>
                         }
                     {columnform &&
-                    <button onClick={clkaddcolumn}>Add column</button>}
+                    <button className={styles.actionButton} onClick={clkaddcolumn}>Add column</button>}
             </div>
             
         </div>
-        <button onClick={edittheboard}>Edit board</button>
-    </div>
+        <button className={styles.actionButton} onClick={edittheboard}>Edit board</button>
+    </div></div>
     
 	</div>
 	);
