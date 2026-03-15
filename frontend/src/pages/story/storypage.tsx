@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
-
-interface Board {
+import styles from "./storypage.module.css";interface Board {
     _id: string;
     projectname: string;
     todo: [string];
