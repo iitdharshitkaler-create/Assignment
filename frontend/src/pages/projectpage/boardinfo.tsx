@@ -282,13 +282,16 @@ function BoardInfo() {
         setColumnpos(-1);
     }
 	return (
-
-	<div className="container">
+	<div className={styles.container}>
+		<div className={styles.loginCard} style={{marginTop: "2px"}}>
         <h1>Projet: {project.name}</h1>
         <h1>Board {boardpos} </h1>
         <h2>{boardid}</h2>
-    <h2 className="header">Team Members: </h2>
-    <button onClick={showTeammembers}>Show team members </button> {
+		</div>
+	
+	<div className={styles.loginCard} style={{marginTop: "200px"}}>
+    <h2 className={styles.text}>Team Members: </h2>
+    <button className={styles.actionButton} onClick={showTeammembers}>Show team members </button> {
         show && <div>
     <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
     <thead>
@@ -308,7 +311,7 @@ function BoardInfo() {
         ))}
     </tbody>
     </table>
-    <button className="button" onClick={addmember} >Add Team Member</button>
+    <button className={styles.actionButton} onClick={addmember} >Add Team Member</button>
     </div> }
 
     {showmembers && (
@@ -324,6 +327,7 @@ function BoardInfo() {
             </table>
         </div>
         )}
+	</div>
     <br></br>
     <div>
         <div>
