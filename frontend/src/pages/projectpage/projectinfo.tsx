@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-
+import styles from "./projectinfo.module.css";
 interface Project {
   name: string;
   description: string;
@@ -140,12 +140,11 @@ function Project() {
         loadAdmins();
     }
 	return (
-	  <div className="container">
+	  <div className={styles.container}>
+		<div className={styles.textCard}>
 		<h1 className="header">Project Name: {project.name} </h1>
-		{/* the name of project selected is here */}
 		<h1 className="header">Project Desciption: {project.description}</h1>
     <br></br>
-
     <div>Project Admins
         <div>
             {allprojectadmins.map ((user, pos) => (
@@ -155,9 +154,8 @@ function Project() {
             ))}
         </div>
     </div>
-
     { seletPadmin && <div>
-        <form> Choose your project admin <select value={project_admin} onChange={(e) => setProject_admin( e.target.value )}>
+        <form className={styles.form} style={color:"black"}> Choose your project admin <select value={project_admin} onChange={(e) => setProject_admin( e.target.value )}>
                          <option value="">Select Assignee</option>
                          {allusers.map(user => (
                             <option key={user._id} value={user._id}>
@@ -165,13 +163,16 @@ function Project() {
                             </option>
                         ))}
                         </select></form>
-                        <button type="button" onClick={clkaddpadmin}>Done</button>
-                        </div> }
-    <button onClick={clkaddprojectadmin}> ADD ProjectAdmin </button>
-    <button onClick={clkaddboard}> ADDboard </button>
-
+                        <button className={styles.actionButton} type="button" onClick={clkaddpadmin}>Done</button>
+                        </div>}
+		
+    <button className={styles.actionButton} onClick={clkaddprojectadmin}> ADD ProjectAdmin </button></div>
+    <button className={styles.actionButton} style={{position:"relative",top:"150px"}} onClick={clkaddboard}> ADDboard </button>
+		
     <div>
         <div>
+			<table className={styles.tableWrapper} style={{position:"relative",top:"150px",left:"400px"}}>
+				<th>Boards</th>
             {allboard?.map((board, boardpos) => (
                 <div>
                 <a key={boardpos} href={`/projectinfo/${id}/${board._id}/${boardpos}`}>
