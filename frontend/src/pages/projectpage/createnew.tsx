@@ -32,13 +32,18 @@ function CreateNewProject() {
     }
   return (
     <div className = {styles.container}>
-    <h1 className= {styles.header} >Project Name:
-        <input type="text" placeholder="New Project" onChange={(e) => setProject({...project, name: e.target.value})}></input>
-    </h1>
-    <h1 className= {styles.header}>Description
-        <input type="text" placeholder="About this project" onChange={(e) => setProject({...project, description:e.target.value})}></input>
-    </h1>
-    <button className={styles.button} onClick={clkcreatedProject}>Create project</button>
+      <div className={styles.loginCard}>
+    <h2 className= {styles.header} >Project Name:
+      <div>
+        <input className={styles.textButton} type="text" placeholder="New Project" onChange={(e) => setProject({...project, name: e.target.value})}></input>
+      </div>
+    </h2>
+    <h2 className= {styles.text}>Description
+      <div>
+        <input  className={styles.textButton} type="text" placeholder="About this project" onChange={(e) => setProject({...project, description:e.target.value})}></input>
+      </div>
+    </h2>
+    <button style={{marginTop:"20px"}} className={styles.actionButton} className={styles.textButton} onClick={clkcreatedProject}>Create project</button>
     </div>
   )
 }
