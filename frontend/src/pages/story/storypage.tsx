@@ -2,47 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-interface Board {
-    _id: string;
-    projectname: string;
-    todo: [string];
-    inprogress: [string];
-    done: [string];
-    stories: Story[ ];
-    __v: number;
-}
-
-interface User {
-    name: string;
-    _id: string;
-}
-
-interface Task {
-    _id: string;
-    boardname: string;
-    storyname: string;
-    name: string;
-    description: string; 
-    assigneeid: string;
-    assignee: string;
-    reporterid: string;
-    reporter: string;
-    status: string;
-    dueDate: string;
-    priority: string;
-    tasktype: string;
-}
-
-interface Story {
-    _id: string;
-    boardname: string;
-  storyname: string;
-  status: string;
-  tasks: Task[];
-}
+import type {  User, Task, Story } from "../../types/type";
 
 function StoryInfo() {
     const navigate = useNavigate();
+    const [role, setRole] = useState("");
     const { id, boardid, boardpos, storyid } = useParams();
     const [story, setStory ] = useState<Story>({
         _id: "",
@@ -60,6 +24,7 @@ function StoryInfo() {
         .then(data => {
             setStory(data.story);
             setProjectname(data.projectname);
+            setRole(data.role);
         });
     }   
     useEffect(() => {
@@ -118,6 +83,11 @@ function StoryInfo() {
         dueDate: "",
         priority: "",
         tasktype: "",
+        createdat: "",
+        updatedat: "",
+        resolvedat: "",
+        closedat: "",
+        auditlog: [],
     })
     const [editform, SetEditform] = useState(false);
     async function editdone(){
@@ -150,7 +120,7 @@ function StoryInfo() {
         .then(data => {
             setAllmembers(data.projectmembers);
         });
-    }, []); 
+    },[]); 
     async function clickedLogout() {
 
         try{
@@ -166,10 +136,36 @@ function StoryInfo() {
         console.log("Server connection failed:", error);
         }
     }
+    const [user, setUser] = useState<User>({
+        _id: "",
+        name: "",
+        avatar: "",
+      }); 
+      useEffect(() => {
+        fetch("http://localhost:3000/profile", {
+          credentials: "include"
+        })
+          .then(res => res.json())
+          .then(data => {
+            setUser({
+              _id: data._id,
+              name: data.name,
+              avatar: data.avatar
+            });
+          });
+      }, []);
+
 	return (
         
         <div> 
             <div>
+                 <header>
+                    <h1>Profile</h1>
+                    <div>
+                    <div>Name: {user.name} </div>
+                    <div>Avatar: <img src={`/${user.avatar}.jpeg`} height={"40px"}/> </div>
+                    </div>
+                </header>
             </div>
             <h1>Projectname: {projectname}</h1>
             <h1>Board {boardpos}</h1>
@@ -190,6 +186,7 @@ function StoryInfo() {
                     </div>}
             { editform && 
                 <div> 
+                    {(role === "project_admin" || role === "global_admin") &&
                     <form> Assignee: <select value={edittask.assigneeid} onChange={(e) => setEdittask({ ...edittask, assigneeid: e.target.value })}>
                          <option value="">Select Assignee</option>
                          {allmembers.map(user => (
@@ -197,15 +194,7 @@ function StoryInfo() {
                                 {user.name}
                             </option>
                         ))}
-                        </select></form>
-                    <form> Reporter: <select value={edittask.reporterid} onChange={(e) => setEdittask({ ...edittask, reporterid: e.target.value })}>
-                         <option value="">Select Assignee</option>
-                         {allmembers.map(user => (
-                            <option key={user._id} value={user._id}>
-                                {user.name}
-                            </option>
-                        ))}
-                        </select></form>
+                        </select></form>}
                     <form> Priority: <select value={edittask.priority} onChange={(e) => setEdittask({...edittask, priority: e.target.value})}>
                         <option>Low</option>
                         <option>Medium</option>
@@ -247,7 +236,7 @@ function StoryInfo() {
                 ))}
             </tbody>
             </table>
-            <button onClick={addtask}> Add Task </button>
+            {(role === "project_admin" || role === "member") &&<button onClick={addtask}> Add Task </button>}
             <button onClick={clickedLogout}>Logout</button>
         </div>
 	);

@@ -21,7 +21,7 @@ const Task = new mongoose.Schema(
         updatedat: Date,
         resolvedat: Date,
         closedat: Date,
-        auditlog: [{String} ],
+        auditlog: [ String],
     }
 );
 

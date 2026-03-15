@@ -59,7 +59,7 @@ interface Notification {
     read: boolean,
 }
 
-function ProjectDashboard() {
+function ProfileDashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   useEffect(() => {
     fetch("http://localhost:3000/projects", {
@@ -121,10 +121,10 @@ function ProjectDashboard() {
         });
   }
   useEffect(() => {
-  if(user._id){
-    fetchnotifications();
-  }
-}, [user._id])
+    if(user._id){
+      fetchnotifications();
+    }
+  }, [user._id])
 
   return (
     <div className={styles.container}>
@@ -162,4 +162,4 @@ function ProjectDashboard() {
   );
 };
 
-export default ProjectDashboard;
+export default ProfileDashboard;

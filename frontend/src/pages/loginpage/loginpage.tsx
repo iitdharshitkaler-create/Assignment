@@ -22,7 +22,7 @@ function LoginPage() {
         });
         const state = await res.json();
         if(state.loggedin){
-          navigate("/mainpage");
+          navigate("/profilepage");
         }
       } catch (error) {
         console.log("Server connection failed:", error);

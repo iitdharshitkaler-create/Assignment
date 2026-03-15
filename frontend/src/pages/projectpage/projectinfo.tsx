@@ -1,52 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import type { Project, User, Board } from "../../types/type";
 
-interface Project {
-  name: string;
-  description: string;
-  project_admin: User[];
-}
-interface User {
-    name: string;
-    _id: string;
-}
-interface Column {
-    name: string;
-    tasks: Task[];
-}
-interface Board {
-    _id: string;
-    projectname: string;
-    columns: {name: string, tasks: Task[]}[]
-    stories: Story[ ];
-    __v: number;
-}
-interface Story {
-    _id: string;
-    boardname: string;
-  storyname: string;
-  status: string;
-  tasks: [string];
-}
-
-interface Task {
-    _id: string;
-    boardname: string;
-    storyname: string;
-    name: string;
-    description: string; 
-    assigneeid: string;
-    assignee: string;
-    reporterid: string;
-    reporter: string;
-    status: string;
-    dueDate: string;
-    priority: string;
-}
-
-function Project() {
+function ProjectInfo() {
     const navigate = useNavigate();
     const { id } = useParams();  
+    const [role, setRole] = useState("");
     const[project, setProject] = useState<Project>({
         name: "",
         description: "",
@@ -60,6 +19,7 @@ function Project() {
         .then(res => res.json())
         .then(data => {
             setProject(data.project);
+            setRole(data.role);
         });
     }, []); 
 
@@ -155,8 +115,35 @@ function Project() {
         console.log("Server connection failed:", error);
         }
     }
+    const [user, setUser] = useState<User>({
+        _id: "",
+        name: "",
+        avatar: "",
+      }); 
+      useEffect(() => {
+        fetch("http://localhost:3000/profile", {
+          credentials: "include"
+        })
+          .then(res => res.json())
+          .then(data => {
+            setUser({
+              _id: data._id,
+              name: data.name,
+              avatar: data.avatar
+            });
+          });
+      }, []);
 	return (
 	  <div className="container">
+             <div>
+                 <header>
+                    <h1>Profile</h1>
+                    <div>
+                    <div>Name: {user.name} </div>
+                    <div>Avatar: <img src={`/${user.avatar}.jpeg`} height={"40px"}/> </div>
+                    </div>
+                </header>
+            </div>
 		<h1 className="header">Project Name: {project.name} </h1>
 		{/* the name of project selected is here */}
 		<h1 className="header">Project Desciption: {project.description}</h1>
@@ -183,8 +170,8 @@ function Project() {
                         </select></form>
                         <button type="button" onClick={clkaddpadmin}>Done</button>
                         </div> }
-    <button onClick={clkaddprojectadmin}> ADD ProjectAdmin </button>
-    <button onClick={clkaddboard}> ADDboard </button>
+    {(role === "global_admin") && <button onClick={clkaddprojectadmin}> ADD ProjectAdmin </button>}
+    {(role === "project_admin") && <button onClick={clkaddboard}> ADDboard </button> }
 
     <div>
         <div>
@@ -203,4 +190,4 @@ function Project() {
 	);
   }
   
-  export default Project;
+  export default ProjectInfo;

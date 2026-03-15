@@ -87,11 +87,7 @@ interface Request_user extends Request {
 }
 
 app.post('/createnew', isLoggedIn, async (req: Request_user, res: Response ) => {  
-
-    const email = (req.user as { email: string }).email;
-
-    console.log("Email from token:", email);
-    const user = await userData.findOne({ email: (req.user as { email: string }).email });
+    const user = await userData.findById((req.user as { userid: string }).userid)
     const { name, description } = req.body;
     if (!user) { return res.status(400).json({ error: "User not found" }); }
 
@@ -121,10 +117,15 @@ app.get('/profile', isLoggedIn, async (req: Request_user, res: Response) => {
 
 app.get('/project/:id', isLoggedIn, async (req: Request_user, res: Response) => {
     const project = await projectData.findById(req.params.id);
-    const user = await userData.findById(project?.global_admin);
-    let name: string | null | undefined = "";
-    if(user) name = user.name;
-    res.json({ project, name });
+    const user = await userData.findById((req.user as { userid: string }).userid);
+    if(!project || !user){ return res.status(404).json({ error: "Project not found" }); }
+    let role = "viewer"
+    if(user._id.toString() === project?.global_admin?.toString()){ role = "global_admin" }
+    else if(project.project_admin.includes(user._id)){
+        role = "project_admin";
+    }
+    console.log(role);
+    res.json({ project, role });
 });
 
 app.get('/allusers', async (req: Request, res: Response) => {
@@ -251,9 +252,15 @@ app.get('/board/:id/:boardpos', isLoggedIn, async (req: Request_user, res: Respo
     console.log("board");
     const project = await projectData.findById(req.params.id);
     const boardid = await project?.boards[Number(req.params.boardpos)]
-    const board  = await boardData.findById(boardid).populate("stories")
-    .populate("columns.tasks");
-    res.json({ project, board });
+    const board  = await boardData.findById(boardid).populate("stories").populate("columns.tasks");
+    const user = await userData.findById(req.user?.userid);
+    if(!user || !project){ return res.status(404).json({ error: "Board document missing" }); }
+    let role = "viewer"
+    if(user._id.toString() === project?.global_admin?.toString()){ role = "global_admin" }
+    else if(project.project_admin.includes(user._id)){
+        role = "project_admin";
+    }
+    res.json({ project, board, role });
 });
 
 app.get('/story/:storyid/:id', isLoggedIn, async (req: Request_user, res: Response) => {
@@ -261,27 +268,43 @@ app.get('/story/:storyid/:id', isLoggedIn, async (req: Request_user, res: Respon
     const story = await storyData.findById(req.params.storyid).populate("tasks");
     const project = await projectData.findById(req.params.id);
     const projectname = project?.name;
-    res.json({ story, projectname });
+    const user = await userData.findById(req.user?.userid);
+    if(!user || !project) {return res.status(404).json({ error: "Board document missing" }); }
+    let role = "viewer"
+    if(user._id.toString() === project?.global_admin?.toString()){ role = "global_admin" }
+    else if(project.project_admin.includes(user._id)){
+        role = "project_admin";
+    } else if(project.members.includes(user._id)){
+        role = "member";
+    }
+    res.json({ story, projectname, role });
 });
 
 
 
-app.post('/addtaskinstory', async (req: Request, res: Response ) => {  // this defines a route 
+app.post('/addtaskinstory', isLoggedIn, async (req: Request_user, res: Response ) => {  // this defines a route 
     console.log("addtaskinstory")
     const { taskname, taskdescription, tasktype, storyid } = req.body;
+    console.log(req.body);
     const story = await storyData.findById(storyid);
     if(!story){ return  res.status(404).json({ error: "Document missing" });}
     const boardid = story.boardname;
-    if(!boardid) { return  res.status(404).json({ error: "Document missing" }); }
+    const user = await userData.findById(req.user?.userid);
+    if(!boardid || !user) { return  res.status(404).json({ error: "Document missing" }); }
     const task = await taskData.create({
         boardname: boardid,
         storyname: story._id,
         name: taskname,
+        reporterid: user._id ?? "",
+        reporter: user.name ?? "",
         description: taskdescription,
         tasktype: tasktype,
         status: "TODO",
-        dueDate:  "",
+        dueDate: "",
         priority: "low",
+        createdat: new Date(),
+        updatedat: new Date(),
+        auditlog: [`Task created by ${user.name} at ${new Date().toISOString()}`]
     });
     story.tasks.push(task._id);
     await story.save();

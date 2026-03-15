@@ -1,57 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
-interface Project {
-  name: string;
-  description: string;
-}
-interface User {
-    name: string;
-    _id: string;
-}
-
-interface Column {
-    name: string;
-    tasks: Task[];
-}
-
-interface Task {
-    _id: string;
-    boardname: string;
-    storyname: string;
-    name: string;
-    description: string; 
-    assigneeid: string;
-    assignee: string;
-    reporterid: string;
-    reporter: string;
-    status: string;
-    dueDate: string;
-    priority: string;
-}
-
-interface Board {
-    _id: string;
-    projectname: string;
-    columns: {name: string, tasks: Task[]}[]
-    stories: Story[ ];
-    __v: number;
-}
-
-interface Story {
-    _id: string;
-    boardname: string;
-  storyname: string;
-  status: string;
-  tasks: [string];
-}
+import type { Project, User, Board } from "../../types/type";
 
 function BoardInfo() {
     const navigate = useNavigate();
+    const [role, setRole] = useState("");
     const { id, boardid, boardpos } = useParams();  
     const[project, setProject] = useState<Project>({
         name: "",
         description: "",
+        project_admin: [],
     });
     const[board, setBoard] = useState<Board>({
         _id: "",
@@ -68,8 +26,9 @@ function BoardInfo() {
         .then(data => {
             setProject(data.project);
             setBoard(data.board);
+            setRole(data.role);
         });
-    }, []); 
+    },[]); 
 
     const[allusers, setAllusers] = useState<User[]>([]);
     useEffect(() => {
@@ -121,7 +80,7 @@ function BoardInfo() {
 
     useEffect(() => {
         loadMembers();
-    }, []);
+    },[]);
     const[storyform, setStoryform] = useState(false);
     const[newstory, setNewstory] = useState("");
     const[boardindex, setBoardindex] = useState(-1);
@@ -202,7 +161,7 @@ function BoardInfo() {
     }
     useEffect(() => {
         loadBoard();
-    }, [id, boardpos]);
+    }, []);
 
     const[show, setShow] = useState(false);
     function showTeammembers(){
@@ -297,12 +256,38 @@ function BoardInfo() {
         console.log("Server connection failed:", error);
         }
     }
+    const [user, setUser] = useState<User>({
+        _id: "",
+        name: "",
+        avatar: "",
+      }); 
+      useEffect(() => {
+        fetch("http://localhost:3000/profile", {
+          credentials: "include"
+        })
+          .then(res => res.json())
+          .then(data => {
+            setUser({
+              _id: data._id,
+              name: data.name,
+              avatar: data.avatar
+            });
+          });
+      }, []);
 	return (
 
 	<div className="container">
+        <div>
+            <header>
+                <h1>Profile</h1>
+                <div>
+                <div>Name: {user.name} </div>
+                <div>Avatar: <img src={`/${user.avatar}.jpeg`} height={"40px"}/> </div>
+                </div>
+            </header>
+        </div>
         <h1>Projet: {project.name}</h1>
         <h1>Board {boardpos} </h1>
-        <h2>{boardid}</h2>
     <h2 className="header">Team Members: </h2>
     <button onClick={showTeammembers}>Show team members </button> {
         show && <div>
@@ -324,7 +309,7 @@ function BoardInfo() {
         ))}
     </tbody>
     </table>
-    <button className="button" onClick={addmember} >Add Team Member</button>
+     {(role === "global_admin" || role === "project_admin") && <button className="button" onClick={addmember} >Add Team Member</button>}
     </div> }
 
     {showmembers && (
@@ -350,9 +335,7 @@ function BoardInfo() {
                         <button onClick={putstoryonboard}>done</button>
                     </div>}
             <div>Stories
-                <button onClick={() => clkaddstory(Number(boardpos))}> add story  </button>
-                <button> put story on board</button>
-                <button> remove story</button>
+                {(role === "project_admin") && <button onClick={() => clkaddstory(Number(boardpos))}> add story  </button> }
                 <div>
                     <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
                     <thead>
@@ -371,7 +354,7 @@ function BoardInfo() {
                             <td> {story.tasks?.length ?? 0} </td>
                             <td> {story.status} </td>
                             <td>
-                                <button onClick={() => clkaddtoboard(story._id)}> Add to Board</button>
+                                {(role === "project_admin") &&  <button onClick={() => clkaddtoboard(story._id)}> Add to Board</button>}
                                 <button>Del story</button>
                             </td>
                         </tr>
@@ -383,7 +366,7 @@ function BoardInfo() {
             <div style={{backgroundColor: "yellow"}}> Kanban Board {board.columns.map((column, pos) => (
                     <div key = {pos} style={{ backgroundColor: "red" }} onDragOver={allowDrop} onDrop={() => handleDrop(pos)}> {column.name}
                     {column.tasks.map((task, index) => (
-                        <div key={index} draggable onDragStart={() => {handleDragStart(task._id, pos)}}> {task.name} </div>
+                        <div key={index} draggable = {task.assigneeid === user._id} style={{ opacity: task.assigneeid === user._id ? 1 : 0.5, cursor: task.assigneeid === user._id ? "grab" : "not-allowed" }} onDragStart={() => {handleDragStart(task._id, pos)}}> {task.name} </div>
                         ))}
                     {columnform &&
                     <div>
@@ -405,7 +388,7 @@ function BoardInfo() {
             </div>
             
         </div>
-        <button onClick={edittheboard}>Edit board</button>
+         {(role === "project_admin") && <button onClick={edittheboard}>Edit board</button> }
     </div>
     <button onClick={clickedLogout}>Logout</button>
 	</div>

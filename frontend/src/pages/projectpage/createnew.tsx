@@ -24,7 +24,7 @@ function CreateNewProject() {
         });
         const state = await res.json();
         if(state.created){
-          navigate("/mainpage");
+          navigate("/profilepage");
         }
       } catch (error) {
         console.log("Server connection failed:", error);
