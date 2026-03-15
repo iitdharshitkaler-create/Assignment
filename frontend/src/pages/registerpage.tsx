@@ -28,12 +28,12 @@ function RegisterPage() {
   }
   return (
     <div className={styles.container}>
-
-      <h1>Enter the details for creating new account</h1>
-      <form method="post">
-        Name: <input onChange={(e) => setUser({ ...user, name: e.target.value })}/> <br></br>
-        Email: <input onChange={(e) => setUser({ ...user, email: e.target.value })}/> <br></br>
-        Avatar: 
+    <div className={styles.loginCard}>
+    <h1 style={{ fontFamily: "arial" }}>Enter the details for creating new account</h1>
+      <form lassName={styles.form} method="post">
+        Name: <input className={styles.textButton} onChange={(e) => setUser({ ...user, name: e.target.value })}/> <br></br>
+        Email: <input className={styles.textButton} onChange={(e) => setUser({ ...user, email: e.target.value })}/> <br></br>
+        <div style={{position:"relative",right:"137px"}}>Avatar: </div>
         <div style={{display: "flex", gap: "20px"}}>
         <div onClick={()=>setUser({ ...user, avatar: "man"})}>
           <img src="/public/man.jpeg" width="80"/>
@@ -43,12 +43,13 @@ function RegisterPage() {
             <img src="/public/woman.jpeg" width="80"/>
         </div>
         <br></br>
-        </div>
-        password: <input onChange={(e) => setUser({ ...user, password: e.target.value })}/>
+        </div> 
+        password: <input className={styles.textButton} onChange={(e) => setUser({ ...user, password: e.target.value })}/>
       </form>
-      <button className={styles.button} onClick={clickedregister}>
+      <button className={styles.actionButton} onClick={clickedregister}>
         Create Account
       </button>
+    </div>
     </div>
   )
 }
