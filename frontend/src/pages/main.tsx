@@ -132,7 +132,6 @@ function App() {
   return (
     
     <div className={styles.container}>
-
       <h1 className = {styles.header}>Project Management System</h1>
       <div className={styles.loginCard}>
       <button className={styles.actionButton} onClick={loginaccount}>
