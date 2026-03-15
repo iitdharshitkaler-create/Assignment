@@ -124,7 +124,7 @@ app.get('/project/:id', isLoggedIn, async (req: Request_user, res: Response) => 
     const user = await userData.findById(project?.global_admin);
     let name: string | null | undefined = "";
     if(user) name = user.name;
-    res.json({ project, name, });
+    res.json({ project, name });
 });
 
 app.get('/allusers', async (req: Request, res: Response) => {
@@ -141,11 +141,8 @@ app.get('/allprojects', async (req: Request, res: Response) => {
 app.post('/addmemberinproject', async (req: Request, res: Response ) => {  // this defines a route 
     console.log("adding member inproject");
     const {choosenuser, project} = req.body;
-
     const user = await userData.findById( choosenuser );
-
     const this_project = await projectData.findById(project._id);
-
     await projectData.findByIdAndUpdate(
             project._id,
         { $addToSet: { members: user?._id } }
@@ -154,6 +151,7 @@ app.post('/addmemberinproject', async (req: Request, res: Response ) => {  // th
         return res.status(404).json({ error: "Project not found" });
     }
     user.projects.push(project._id); 
+    user.projectViewer.push(project._id);
     await user.save();
     res.json({ added: true });
 });
@@ -238,7 +236,7 @@ app.post('/movetaskonboard', async (req: Request, res: Response ) => {  // this 
     const fromcolumn = board.columns[from as number];
     const tocolumn = board.columns[to as number];
     if(!tocolumn || !fromcolumn){return res.status(404).json({ error: "Board document missing" }); }
-    if(tocolumn.name === "INPREVIEW" && tocolumn.tasks.length >= 5 ) { return res.json({ error: "WIP limit reached for INPREVIEW column" }); }
+    if(tocolumn.name === "IN-PROGRESS" && tocolumn.tasks.length >= 5 ) { return res.json({ error: "WIP limit reached for INPREVIEW column" }); }
     fromcolumn.tasks = fromcolumn.tasks.filter( (id) => id.toString() !== taskid );
     tocolumn.tasks.push(taskid);
     await board.save();
@@ -301,11 +299,12 @@ app.post('/removetaskinstory/:storyid', async (req: Request, res: Response ) => 
     res.json({ removed: true });
 });
 
-app.post('/updatetask', isLoggedIn, async (req: Request_user, res: Response) => {
+app.post('/updatetask/:id', isLoggedIn, async (req: Request_user, res: Response) => {
   try {
     console.log("doneupadating2");
     const { _id, assigneeid, reporterid, status, priority, dueDate } = req.body;
-    if (!req.user) {  console.log("here1");return res.status(401).json({ error: "Unauthorized" }); }
+    const project = await projectData.findById(req.params.id)
+    if (!req.user || !project) {  console.log("here1");return res.status(401).json({ error: "Unauthorized" }); }
     const senderId = new mongoose.Types.ObjectId(req.user.userid);
     const task = await taskData.findById(_id);
     if (!task) { return res.status(404).json({ error: "Task not found" }); }
@@ -340,6 +339,7 @@ app.post('/updatetask', isLoggedIn, async (req: Request_user, res: Response) => 
         read: false
       });
       Auser.notifications.push(message._id)
+      Auser.projectMember.push(project._id)
       await Auser.save();
     }
     if (reporterChanged) {
@@ -355,6 +355,7 @@ app.post('/updatetask', isLoggedIn, async (req: Request_user, res: Response) => 
         read: false
       });
       Ruser.notifications.push(message._id)
+      Ruser.projectMember.push(project._id)
       await Ruser.save();
     }
     res.json({ updated: true });
@@ -538,6 +539,8 @@ app.post('/addadminproject', isLoggedIn, async (req: Request_user ,res: Response
         read: false
       });
     user.notifications.push(message._id);
+    user.projectAdmin.push(project._id);
+    user.projects.push(project._id);
     user.save();
     project.save();
     res.json({ deletedcolumn :true })

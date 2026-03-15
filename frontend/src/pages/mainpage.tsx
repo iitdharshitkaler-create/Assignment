@@ -1,5 +1,5 @@
 
-import styles from "./mainpage.module.css";
+import styles from "./loginpage.module.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -128,43 +128,31 @@ function ProjectDashboard() {
 
   return (
     <div className={styles.container}>
-      <nav className={styles.nav}>
-      <h1 style={{position:"relative",left:"550px"}}> Project Management</h1>
-      <button className={styles.userToggleBtn} onClick={() => setisOpen(!isopen)}>
-      <div >👤</div>
-      </button>
-      <div  className={`${styles.userBox} ${isopen ? styles.userBoxOpen : ''}`}>
-      <div >
-        <div>Profile </div>
-        <div>Name: {user.name} </div>
-        <div>Avatar: {user.avatar} </div>
-        <button className={`${styles.userCloseButton} ${isopen ? styles.userBoxOpen : ''}`} onClick={() => setisOpen(false)}>Close ×</button>
-        <br></br>
-        <button className={styles.button} onClick={clickedLogout}>Logout</button>
-      </div>
-      </div>
-      </nav>
-
-      <div className={styles.loginCard} style={position:"relative",left:"400px">
+      <header>
+        <h1>Profile</h1>
+        <div>
+          <div>Name: {user.name} </div>
+          <div>Avatar: <img src={`/${user.avatar}.jpeg`} height={"40px"}/> </div>
+        </div>
+      </header>
+      <div>
         notifications
-        <div className={styles.tableWrapper}>
+        <div>
            {messages.map((message) => (
                     <div> {message.Message} </div>
                     ))}
         </div>
       </div>
-      <main className={styles.loginCard} style={position:"relative",right:"300px">
+      <main>
         <nav>
-          <button className={styles.actionButton} onClick={clkcreateproject}>Create New Project</button>
-          <div>Projects</div>
-          <table className={styles.tableWrapper}> {projects.map((project) => (
-            < tr className={styles.tableHead} key={project._id}> 
-              <td><Link to={`/projectinfo/${project._id}`}>
+          <button className={styles.button} onClick={clkcreateproject}>Create New Project</button>
+          <div> {projects.map((project) => (
+            <div key={project._id}> 
+              <Link to={`/projectinfo/${project._id}`}>
                 {project.name}
-              </Link></td>
-            </tr>
-            
-          ))}</table>
+              </Link>
+            </div> 
+          ))} </div>
           <button className={styles.button}>See Completed Projects</button>
           <hr />
           <button className={styles.button} onClick={clickedLogout}>Logout</button>

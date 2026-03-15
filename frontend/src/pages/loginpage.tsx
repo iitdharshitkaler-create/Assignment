@@ -30,16 +30,15 @@ function LoginPage() {
     }
    return (
     <div className={styles.container}>
-      <div className={styles.loginCard}>
-      <h1 style={{ fontFamily: "arial" }} >Enter the details for login</h1>
-      <form className = {styles.form} >
+      <h1>Enter the details for login</h1>
+      <form>
         email: <input onChange={(e) => setUser({ ...user, email: e.target.value })}/> <br></br>
         password: <input onChange={(e) => setUser({ ...user, password: e.target.value })}/>
       </form>
-      <button className={styles.actionButton} onClick={clickedregister}>
+      <button className={styles.button} onClick={clickedregister}>
         Login
       </button>
-    </div></div>
+    </div>
   )
 }
 

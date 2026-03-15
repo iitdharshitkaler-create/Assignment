@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import styles from "./boardinfo.module.css";
+import { useParams, useNavigate } from "react-router-dom";
+
 interface Project {
   name: string;
   description: string;
@@ -47,6 +47,7 @@ interface Story {
 }
 
 function BoardInfo() {
+    const navigate = useNavigate();
     const { id, boardid, boardpos } = useParams();  
     const[project, setProject] = useState<Project>({
         name: "",
@@ -281,21 +282,33 @@ function BoardInfo() {
         setRenameform(true);
         setColumnpos(-1);
     }
+    async function clickedLogout() {
+
+        try{
+        const res = await fetch("http://localhost:3000/logout", {
+            method:"POST",
+            credentials: "include"
+        });
+        const cond = await res.json();
+        if(cond.logout){
+            navigate("/");
+        }
+        } catch (error) {
+        console.log("Server connection failed:", error);
+        }
+    }
 	return (
-	<div className={styles.container}>
-		<div className={styles.loginCard} style={{marginTop: "2px"}}>
+
+	<div className="container">
         <h1>Projet: {project.name}</h1>
         <h1>Board {boardpos} </h1>
         <h2>{boardid}</h2>
-		</div>
-	
-	<div className={styles.loginCard} style={{marginTop: "200px"}}>
-    <h2 className={styles.text}>Team Members: </h2>
-    <button className={styles.actionButton} onClick={showTeammembers}>Show team members </button> {
+    <h2 className="header">Team Members: </h2>
+    <button onClick={showTeammembers}>Show team members </button> {
         show && <div>
     <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
     <thead>
-        <tr style = {{textAlign : 'left',borderBottom : '1px solid #eee'}}>
+        <tr style = {{textAlign : 'left',borderBottom : '1px solidd #eee'}}>
         <th style = {{padding  :'12px 0' }}>Name</th>
         <th style = {{padding : '12px 0' }}>Role</th>
         <th style = {{padding : '12px 0' }}>Associated stories/task</th>
@@ -311,7 +324,7 @@ function BoardInfo() {
         ))}
     </tbody>
     </table>
-    <button className={styles.actionButton} onClick={addmember} >Add Team Member</button>
+    <button className="button" onClick={addmember} >Add Team Member</button>
     </div> }
 
     {showmembers && (
@@ -327,7 +340,6 @@ function BoardInfo() {
             </table>
         </div>
         )}
-	</div>
     <br></br>
     <div>
         <div>
@@ -344,7 +356,7 @@ function BoardInfo() {
                 <div>
                     <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
                     <thead>
-                        <tr style = {{textAlign : 'left',borderBottom : '1px solid #eee'}}>
+                        <tr style = {{textAlign : 'left',borderBottom : '1px solidd #eee'}}>
                         <th style = {{padding  :'12px 0' }}> Name </th>
                         <th style = {{padding : '12px 0' }}> Tasks </th>
                         <th style = {{padding : '12px 0' }}> Status </th>
@@ -368,37 +380,34 @@ function BoardInfo() {
                     </table>
                  </div>
             </div>
-			<div className={styles.loginCard}>
-            <div style={{backgroundColor: "yellow",color:"black",borderRadius:"8px"}}> Kanban Board {board.columns.map((column, pos) => (
-					<div className={styles.tableWrapper} >
+            <div style={{backgroundColor: "yellow"}}> Kanban Board {board.columns.map((column, pos) => (
                     <div key = {pos} style={{ backgroundColor: "red" }} onDragOver={allowDrop} onDrop={() => handleDrop(pos)}> {column.name}
                     {column.tasks.map((task, index) => (
                         <div key={index} draggable onDragStart={() => {handleDragStart(task._id, pos)}}> {task.name} </div>
                         ))}
                     {columnform &&
                     <div>
-                        <button className={styles.actionButton} onClick={() => clkrenamecolumn(pos)}>Rename</button>
-                        <button className={styles.actionButton} onClick={() => clkdeletecolumn(pos)}>Delete</button>
+                        <button onClick={() => clkrenamecolumn(pos)}>Rename</button>
+                        <button onClick={() => clkdeletecolumn(pos)}>Delete</button>
                     </div>}
                     </div>
-					</div>
                     ))}
                     {renameform && 
                         <div>
                             <form>
                                 <input value={newname} onChange={(e) => setNewname(e.target.value)} />
                             </form>
-                            <button className={styles.actionButton} onClick={donerenaming}>Done</button>
+                            <button onClick={donerenaming}>Done</button>
                         </div>
                         }
                     {columnform &&
-                    <button className={styles.actionButton} onClick={clkaddcolumn}>Add column</button>}
+                    <button onClick={clkaddcolumn}>Add column</button>}
             </div>
             
         </div>
-        <button className={styles.actionButton} onClick={edittheboard}>Edit board</button>
-    </div></div>
-    
+        <button onClick={edittheboard}>Edit board</button>
+    </div>
+    <button onClick={clickedLogout}>Logout</button>
 	</div>
 	);
   }
