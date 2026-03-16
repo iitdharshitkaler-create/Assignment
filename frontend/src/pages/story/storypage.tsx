@@ -1,24 +1,272 @@
+// import { useEffect, useState } from "react";
+// import { useParams } from "react-router-dom";
+// import { Link } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
+// import type {  User, Task, Story } from "../../types/type";
+
+// function StoryInfo() {
+//     const navigate = useNavigate();
+//     const [role, setRole] = useState("");
+//     const { id, boardid, boardpos, storyid } = useParams();
+//     const [story, setStory ] = useState<Story>({
+//         _id: "",
+//         boardname: "",
+//         storyname: "",
+//         status: "",
+//         tasks: [],
+//     });
+//     const [projectname, setProjectname ] = useState("");
+//     async function loadStories() {
+//         fetch(`http://localhost:3000/story/${storyid}/${id}`, {
+//         credentials: "include"
+//         })
+//         .then(res => res.json())
+//         .then(data => {
+//             setStory(data.story);
+//             setProjectname(data.projectname);
+//             setRole(data.role);
+//         });
+//     }   
+//     useEffect(() => {
+//         loadStories();
+//     }, []);  
+
+//     const [taskname, setTaskname] = useState("");
+//     const [taskdescription, setTaskdescription ] = useState("");
+//     const [tasktype, setTasktype ] = useState("");
+//     const [taskform, setTaskform] = useState(false);
+//     async function clkdone(){
+//         try{
+//             await fetch(`http://localhost:3000/addtaskinstory`, {
+//             method: "POST",
+//             headers: {
+//                 "Content-Type": "application/json"
+//             },
+//             credentials: "include",
+//             body: JSON.stringify({ taskname, taskdescription, tasktype, storyid  })
+//             });
+//         } catch (error) {
+//             console.log("Server connection failed:", error);
+//         }
+//         setTaskform(false);
+//         loadStories();
+//     }
+//     function addtask(){
+//         setTaskform(true);
+//     }
+//     async function clkremovetask(index: number){
+//         try{
+//             await fetch(`http://localhost:3000/removetaskinstory/${storyid}`, {
+//             method: "POST",
+//             headers: {
+//                 "Content-Type": "application/json"
+//             },
+//             credentials: "include",
+//             body: JSON.stringify({ index })
+//             });
+//         } catch (error) {
+//             console.log("Server connection failed:", error);
+//         }
+//         loadStories();
+//     }
+//     const [edittask, setEdittask] = useState<Task>({
+//         _id: "",
+//         boardname: "",
+//         storyname: "",
+//         name: "",
+//         description: "",
+//         assigneeid: "",
+//         assignee: "",
+//         reporterid: "",
+//         reporter: "",
+//         status: "",
+//         dueDate: "",
+//         priority: "",
+//         tasktype: "",
+//         createdat: "",
+//         updatedat: "",
+//         resolvedat: "",
+//         closedat: "",
+//         auditlog: [],
+//     })
+//     const [editform, SetEditform] = useState(false);
+//     async function editdone(){
+//         try{
+//             await fetch(`http://localhost:3000/updatetask/${id}`, {
+//             method: "POST",
+//             headers: {
+//                 "Content-Type": "application/json"
+//             },
+//             credentials: "include",
+//             body: JSON.stringify( edittask )
+//             });
+//         } catch (error) {
+//             console.log("Server connection failed:", error);
+//         }
+//         SetEditform(false);
+//         await loadStories();
+//     }
+//     function clkedittask(task: Task){
+//         setEdittask(task);
+//         SetEditform(true);
+//     }
+
+//     const [allmembers, setAllmembers] = useState<User[]>([]);
+//     useEffect(() => {
+//         fetch(`http://localhost:3000/allmembersinproject/${id}`, {
+//         credentials: "include"
+//         })
+//         .then(res => res.json())
+//         .then(data => {
+//             setAllmembers(data.projectmembers);
+//         });
+//     },[]); 
+//     async function clickedLogout() {
+
+//         try{
+//         const res = await fetch("http://localhost:3000/logout", {
+//             method:"POST",
+//             credentials: "include"
+//         });
+//         const cond = await res.json();
+//         if(cond.logout){
+//             navigate("/");
+//         }
+//         } catch (error) {
+//         console.log("Server connection failed:", error);
+//         }
+//     }
+//     const [user, setUser] = useState<User>({
+//         _id: "",
+//         name: "",
+//         avatar: "",
+//       }); 
+//       useEffect(() => {
+//         fetch("http://localhost:3000/profile", {
+//           credentials: "include"
+//         })
+//           .then(res => res.json())
+//           .then(data => {
+//             setUser({
+//               _id: data._id,
+//               name: data.name,
+//               avatar: data.avatar
+//             });
+//           });
+//       }, []);
+
+// 	return (
+        
+//         <div> 
+//             <div>
+//                  <header>
+//                     <h1>Profile</h1>
+//                     <div>
+//                     <div>Name: {user.name} </div>
+//                     <div>Avatar: <img src={`/${user.avatar}.jpeg`} height={"40px"}/> </div>
+//                     </div>
+//                 </header>
+//             </div>
+//             <h1>Projectname: {projectname}</h1>
+//             <h1>Board {boardpos}</h1>
+//             <h1>Story: {story.storyname}</h1>
+//             <h1>Status: {story.status}</h1>
+//             <h1>Tasks:</h1>
+//             { taskform && 
+//                 <div> 
+//                     <form method="post">
+//                         Name: <input onChange={(e) => setTaskname(e.target.value)}/></form>
+//                         <form>Description: <input onChange={(e) => setTaskdescription(e.target.value)} /></form>
+//                         <form>TaskTye:<select value={tasktype} onChange={(e) => setTasktype(e.target.value)} >
+//                         <option value="">Task Type</option>
+//                         <option>Normal</option>
+//                         <option>Bug</option>
+//                         </select></form>
+//                         <button onClick={clkdone}>done</button>
+//                     </div>}
+//             { editform && 
+//                 <div> 
+//                     {(role === "project_admin" || role === "global_admin") &&
+//                     <form> Assignee: <select value={edittask.assigneeid} onChange={(e) => setEdittask({ ...edittask, assigneeid: e.target.value })}>
+//                          <option value="">Select Assignee</option>
+//                          {allmembers.map(user => (
+//                             <option key={user._id} value={user._id}>
+//                                 {user.name}
+//                             </option>
+//                         ))}
+//                         </select></form>}
+//                     <form> Priority: <select value={edittask.priority} onChange={(e) => setEdittask({...edittask, priority: e.target.value})}>
+//                         <option>Low</option>
+//                         <option>Medium</option>
+//                         <option>High</option>
+//                         <option>Critcal</option>
+//                         </select></form>
+//                     <form>
+//                         Duedate:
+//                         <input type="date" value={edittask.dueDate} onChange={(e) => setEdittask({ ...edittask, dueDate: e.target.value }) } /> </form>
+//                     <button onClick={editdone}>done</button>
+//                 </div>}
+//             <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
+//             <thead>
+//                 <tr style = {{textAlign : 'left',borderBottom : '1px solidd #eee'}}>
+//                 <th style = {{padding : '12px 0' }}>Name</th>
+//                 <th style = {{padding : '12px 0' }}>Description</th>
+//                 <th style = {{padding : '12px 0' }}>TaskType</th>
+//                 <th style = {{padding : '12px 0' }}>Assignee</th>
+//                 <th style = {{padding : '12px 0' }}>Reporter</th>
+//                 <th style = {{padding : '12px 0' }}>Status</th>
+//                 <th style = {{padding : '12px 0' }}>DueDate</th>
+//                 <th style = {{padding : '12px 0' }}>Priority</th>
+//                 <th style = {{padding : '12px 0' }}>Actions</th>
+//                 </tr>
+//             </thead>
+//             <tbody>
+//                 {story.tasks.map((task, index) => (
+//                 <tr key={task._id}>
+//                     <td>{task.name}</td>
+//                     <td>{task.description}</td>
+//                     <td>{task.tasktype}</td>
+//                     <td>{task.assignee}</td>
+//                     <td>{task.reporter}</td>
+//                     <td>{task.status}</td>
+//                     <td>{task.dueDate}</td>
+//                     <td>{task.priority}</td>
+//                     <td><button onClick={() => clkedittask(task)}>Edit</button><button onClick={() => clkremovetask(index)}>Remove</button> <div><Link to={`/comment/${id}/${boardid}/${boardpos}/${storyid}/${task._id}`}> Comments </Link></div> </td>
+//                 </tr>
+//                 ))}
+//             </tbody>
+//             </table>
+//             {(role === "project_admin" || role === "member") &&<button onClick={addtask}> Add Task </button>}
+//             <button onClick={clickedLogout}>Logout</button>
+//         </div>
+// 	);
+//   }
+  
+//   export default StoryInfo;
+
+import styles from "./storypage.module.css";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-import type {  User, Task, Story } from "../../types/type";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import type { User, Task, Story } from "../../types/type";
 
 function StoryInfo() {
     const navigate = useNavigate();
     const [role, setRole] = useState("");
     const { id, boardid, boardpos, storyid } = useParams();
-    const [story, setStory ] = useState<Story>({
+
+    const [story, setStory] = useState<Story>({
         _id: "",
         boardname: "",
         storyname: "",
         status: "",
         tasks: [],
     });
-    const [projectname, setProjectname ] = useState("");
+
+    const [projectname, setProjectname] = useState("");
+
     async function loadStories() {
         fetch(`http://localhost:3000/story/${storyid}/${id}`, {
-        credentials: "include"
+            credentials: "include"
         })
         .then(res => res.json())
         .then(data => {
@@ -26,220 +274,267 @@ function StoryInfo() {
             setProjectname(data.projectname);
             setRole(data.role);
         });
-    }   
+    }
+
     useEffect(() => {
         loadStories();
-    }, []);  
+    }, []);
 
     const [taskname, setTaskname] = useState("");
-    const [taskdescription, setTaskdescription ] = useState("");
-    const [tasktype, setTasktype ] = useState("");
+    const [taskdescription, setTaskdescription] = useState("");
+    const [tasktype, setTasktype] = useState("");
     const [taskform, setTaskform] = useState(false);
+
     async function clkdone(){
-        try{
-            await fetch(`http://localhost:3000/addtaskinstory`, {
+        await fetch(`http://localhost:3000/addtaskinstory`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: {"Content-Type": "application/json"},
             credentials: "include",
-            body: JSON.stringify({ taskname, taskdescription, tasktype, storyid  })
-            });
-        } catch (error) {
-            console.log("Server connection failed:", error);
-        }
+            body: JSON.stringify({ taskname, taskdescription, tasktype, storyid })
+        });
+
         setTaskform(false);
         loadStories();
     }
+
     function addtask(){
         setTaskform(true);
     }
-    async function clkremovetask(index: number){
-        try{
-            await fetch(`http://localhost:3000/removetaskinstory/${storyid}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            credentials: "include",
-            body: JSON.stringify({ index })
-            });
-        } catch (error) {
-            console.log("Server connection failed:", error);
-        }
+
+    async function clkremovetask(index:number){
+        await fetch(`http://localhost:3000/removetaskinstory/${storyid}`, {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            credentials:"include",
+            body:JSON.stringify({ index })
+        });
+
         loadStories();
     }
+
     const [edittask, setEdittask] = useState<Task>({
-        _id: "",
-        boardname: "",
-        storyname: "",
-        name: "",
-        description: "",
-        assigneeid: "",
-        assignee: "",
-        reporterid: "",
-        reporter: "",
-        status: "",
-        dueDate: "",
-        priority: "",
-        tasktype: "",
-        createdat: "",
-        updatedat: "",
-        resolvedat: "",
-        closedat: "",
-        auditlog: [],
-    })
+        _id:"",
+        boardname:"",
+        storyname:"",
+        name:"",
+        description:"",
+        assigneeid:"",
+        assignee:"",
+        reporterid:"",
+        reporter:"",
+        status:"",
+        dueDate:"",
+        priority:"",
+        tasktype:"",
+        createdat:"",
+        updatedat:"",
+        resolvedat:"",
+        closedat:"",
+        auditlog:[]
+    });
+
     const [editform, SetEditform] = useState(false);
+
     async function editdone(){
-        try{
-            await fetch(`http://localhost:3000/updatetask/${id}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            credentials: "include",
-            body: JSON.stringify( edittask )
-            });
-        } catch (error) {
-            console.log("Server connection failed:", error);
-        }
+        await fetch(`http://localhost:3000/updatetask/${id}`,{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            credentials:"include",
+            body:JSON.stringify(edittask)
+        });
+
         SetEditform(false);
-        await loadStories();
+        loadStories();
     }
-    function clkedittask(task: Task){
+
+    function clkedittask(task:Task){
         setEdittask(task);
         SetEditform(true);
     }
 
-    const [allmembers, setAllmembers] = useState<User[]>([]);
-    useEffect(() => {
-        fetch(`http://localhost:3000/allmembersinproject/${id}`, {
-        credentials: "include"
+    const [allmembers,setAllmembers] = useState<User[]>([]);
+
+    useEffect(()=>{
+        fetch(`http://localhost:3000/allmembersinproject/${id}`,{
+            credentials:"include"
         })
-        .then(res => res.json())
-        .then(data => {
+        .then(res=>res.json())
+        .then(data=>{
             setAllmembers(data.projectmembers);
         });
-    },[]); 
-    async function clickedLogout() {
+    },[]);
 
-        try{
-        const res = await fetch("http://localhost:3000/logout", {
+    async function clickedLogout(){
+        const res = await fetch("http://localhost:3000/logout",{
             method:"POST",
-            credentials: "include"
+            credentials:"include"
         });
+
         const cond = await res.json();
+
         if(cond.logout){
             navigate("/");
         }
-        } catch (error) {
-        console.log("Server connection failed:", error);
-        }
     }
-    const [user, setUser] = useState<User>({
-        _id: "",
-        name: "",
-        avatar: "",
-      }); 
-      useEffect(() => {
-        fetch("http://localhost:3000/profile", {
-          credentials: "include"
-        })
-          .then(res => res.json())
-          .then(data => {
-            setUser({
-              _id: data._id,
-              name: data.name,
-              avatar: data.avatar
-            });
-          });
-      }, []);
 
-	return (
-        
-        <div> 
-            <div>
-                 <header>
-                    <h1>Profile</h1>
-                    <div>
-                    <div>Name: {user.name} </div>
-                    <div>Avatar: <img src={`/${user.avatar}.jpeg`} height={"40px"}/> </div>
-                    </div>
-                </header>
-            </div>
-            <h1>Projectname: {projectname}</h1>
-            <h1>Board {boardpos}</h1>
-            <h1>Story: {story.storyname}</h1>
-            <h1>Status: {story.status}</h1>
-            <h1>Tasks:</h1>
-            { taskform && 
-                <div> 
-                    <form method="post">
-                        Name: <input onChange={(e) => setTaskname(e.target.value)}/></form>
-                        <form>Description: <input onChange={(e) => setTaskdescription(e.target.value)} /></form>
-                        <form>TaskTye:<select value={tasktype} onChange={(e) => setTasktype(e.target.value)} >
-                        <option value="">Task Type</option>
-                        <option>Normal</option>
-                        <option>Bug</option>
-                        </select></form>
-                        <button onClick={clkdone}>done</button>
-                    </div>}
-            { editform && 
-                <div> 
-                    {(role === "project_admin" || role === "global_admin") &&
-                    <form> Assignee: <select value={edittask.assigneeid} onChange={(e) => setEdittask({ ...edittask, assigneeid: e.target.value })}>
-                         <option value="">Select Assignee</option>
-                         {allmembers.map(user => (
-                            <option key={user._id} value={user._id}>
-                                {user.name}
-                            </option>
-                        ))}
-                        </select></form>}
-                    <form> Priority: <select value={edittask.priority} onChange={(e) => setEdittask({...edittask, priority: e.target.value})}>
-                        <option>Low</option>
-                        <option>Medium</option>
-                        <option>High</option>
-                        <option>Critcal</option>
-                        </select></form>
-                    <form>
-                        Duedate:
-                        <input type="date" value={edittask.dueDate} onChange={(e) => setEdittask({ ...edittask, dueDate: e.target.value }) } /> </form>
-                    <button onClick={editdone}>done</button>
-                </div>}
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
-            <thead>
-                <tr style = {{textAlign : 'left',borderBottom : '1px solidd #eee'}}>
-                <th style = {{padding : '12px 0' }}>Name</th>
-                <th style = {{padding : '12px 0' }}>Description</th>
-                <th style = {{padding : '12px 0' }}>TaskType</th>
-                <th style = {{padding : '12px 0' }}>Assignee</th>
-                <th style = {{padding : '12px 0' }}>Reporter</th>
-                <th style = {{padding : '12px 0' }}>Status</th>
-                <th style = {{padding : '12px 0' }}>DueDate</th>
-                <th style = {{padding : '12px 0' }}>Priority</th>
-                <th style = {{padding : '12px 0' }}>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {story.tasks.map((task, index) => (
-                <tr key={task._id}>
-                    <td>{task.name}</td>
-                    <td>{task.description}</td>
-                    <td>{task.tasktype}</td>
-                    <td>{task.assignee}</td>
-                    <td>{task.reporter}</td>
-                    <td>{task.status}</td>
-                    <td>{task.dueDate}</td>
-                    <td>{task.priority}</td>
-                    <td><button onClick={() => clkedittask(task)}>Edit</button><button onClick={() => clkremovetask(index)}>Remove</button> <div><Link to={`/comment/${id}/${boardid}/${boardpos}/${storyid}/${task._id}`}> Comments </Link></div> </td>
-                </tr>
-                ))}
-            </tbody>
-            </table>
-            {(role === "project_admin" || role === "member") &&<button onClick={addtask}> Add Task </button>}
-            <button onClick={clickedLogout}>Logout</button>
-        </div>
-	);
-  }
-  
-  export default StoryInfo;
+    const [user,setUser] = useState<User>({
+        _id:"",
+        name:"",
+        avatar:""
+    });
+
+    useEffect(()=>{
+        fetch("http://localhost:3000/profile",{
+            credentials:"include"
+        })
+        .then(res=>res.json())
+        .then(data=>{
+            setUser({
+                _id:data._id,
+                name:data.name,
+                avatar:data.avatar
+            });
+        });
+    },[]);
+
+return(
+
+<div className={styles.container}>
+
+<header className={styles.header}>
+<div>
+<h2>Project: {projectname}</h2>
+<p>Board {boardpos} • Story: {story.storyname}</p>
+</div>
+
+<div className={styles.profile}>
+<span>{user.name}</span>
+<img src={`/${user.avatar}.jpeg`} className={styles.avatar}/>
+</div>
+</header>
+
+<section className={styles.section}>
+<h3>Status: {story.status}</h3>
+</section>
+
+{taskform &&
+<div className={styles.form}>
+<input placeholder="Task name" onChange={(e)=>setTaskname(e.target.value)}/>
+<input placeholder="Description" onChange={(e)=>setTaskdescription(e.target.value)}/>
+
+<select value={tasktype} onChange={(e)=>setTasktype(e.target.value)}>
+<option value="">Task Type</option>
+<option>Normal</option>
+<option>Bug</option>
+</select>
+
+<button onClick={clkdone}>Create Task</button>
+</div>
+}
+
+{editform &&
+<div className={styles.form}>
+
+{(role==="project_admin" || role==="global_admin") &&
+<select value={edittask.assigneeid}
+onChange={(e)=>setEdittask({...edittask, assigneeid:e.target.value})}>
+<option value="">Select Assignee</option>
+{allmembers.map(user=>(
+<option key={user._id} value={user._id}>
+{user.name}
+</option>
+))}
+</select>
+}
+
+<select value={edittask.priority}
+onChange={(e)=>setEdittask({...edittask,priority:e.target.value})}>
+<option>Low</option>
+<option>Medium</option>
+<option>High</option>
+<option>Critical</option>
+</select>
+
+<input type="date"
+value={edittask.dueDate}
+onChange={(e)=>setEdittask({...edittask,dueDate:e.target.value})}/>
+
+<button onClick={editdone}>Save</button>
+
+</div>
+}
+
+<section className={styles.section}>
+
+<table className={styles.table}>
+
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>Type</th>
+<th>Assignee</th>
+<th>Reporter</th>
+<th>Status</th>
+<th>DueDate</th>
+<th>Priority</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{story.tasks.map((task,index)=>(
+
+<tr key={task._id}>
+
+<td>{task.name}</td>
+<td>{task.description}</td>
+<td>{task.tasktype}</td>
+<td>{task.assignee}</td>
+<td>{task.reporter}</td>
+<td>{task.status}</td>
+<td>{task.dueDate}</td>
+<td>{task.priority}</td>
+
+<td className={styles.actions}>
+
+<button onClick={()=>clkedittask(task)}>Edit</button>
+
+<button onClick={()=>clkremovetask(index)}>
+Remove
+</button>
+
+<Link to={`/comment/${id}/${boardid}/${boardpos}/${storyid}/${task._id}`}>
+Comments
+</Link>
+
+</td>
+
+</tr>
+
+))}
+
+</tbody>
+
+</table>
+
+{(role==="project_admin" || role==="member") &&
+<button className={styles.button} onClick={addtask}>
+Add Task
+</button>
+}
+
+</section>
+
+<button className={styles.logout} onClick={clickedLogout}>
+Logout
+</button>
+
+</div>
+
+);
+
+}
+
+export default StoryInfo;
