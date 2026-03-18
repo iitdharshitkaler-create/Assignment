@@ -361,37 +361,70 @@ app.post('/updatetask/:id', isLoggedIn, async (req: Request_user, res: Response)
     });
     if(!task){return }
     if (assigneeChanged) {
-      const message = await notificationData.create({
-        Message: "You are assigned " + task.name + " in story " + story.storyname + " of " + project.name,
-        sendto: Auser._id,
-        sendfrom: senderId,
-        task: task._id,
-        board: task.boardname ?? null,
-        story: task.storyname ?? null,
-        project: null,
-        date: new Date(),
-        read: false
-      });
-      Auser.notifications.push(message._id)
-      Auser.projectMember.push(project._id)
-      await Auser.save();
+        const message = await notificationData.create({
+            Message: `You are assigned ${task.name} in story ${story.storyname} of project ${project.name}`,
+            sendto: Auser._id,
+            sendfrom: senderId,
+            task: task._id,
+            board: task.boardname ?? null,
+            story: task.storyname ?? null,
+            project: null,
+            date: new Date(),
+            read: false
+        });
+        Auser.notifications.push(message._id)
+        Auser.projectMember.push(project._id)
+        await Auser.save();
+    } else {
+        const message = await notificationData.create({
+            Message: `Details of  ${task.name} in ${story.storyname} are updated`,
+            sendto: Auser._id,
+            sendfrom: senderId,
+            task: task._id,
+            board: task.boardname ?? null,
+            story: task.storyname ?? null,
+            project: null,
+            date: new Date(),
+            read: false
+        });
+        Auser.notifications.push(message._id)
+        Auser.projectMember.push(project._id)
+        await Auser.save();
     }
     if (reporterChanged) {
-      const message = await notificationData.create({
-        Message: "You are reporter of" + task.name + " in story " + story.storyname + " of " + project.name,
-        sendto: Ruser._id,
-        sendfrom: senderId,
-        task: task._id,
-        board: task.boardname ?? null,
-        story: task.storyname ?? null,
-        project: null,
-        date: new Date(),
-        read: false
-      });
-      Ruser.notifications.push(message._id)
-      Ruser.projectMember.push(project._id)
-      await Ruser.save();
+        const message = await notificationData.create({
+            Message: `You are now reporter of${task.name} in ${story.storyname} of project ${project.name}`  ,
+            sendto: Auser._id,
+            sendfrom: senderId,
+            task: task._id,
+            board: task.boardname ?? null,
+            story: task.storyname ?? null,
+            project: null,
+            date: new Date(),
+            read: false
+        }); 
+        console.log(message.Message)
+        Ruser.notifications.push(message._id)
+        Ruser.projectMember.push(project._id)
+        await Ruser.save();
+    } else {
+        const message = await notificationData.create({
+            Message: `Details of  ${task.name} in ${story.storyname} are updated`,
+            sendto: Auser._id,
+            sendfrom: senderId,
+            task: task._id,
+            board: task.boardname ?? null,
+            story: task.storyname ?? null,
+            project: null,
+            date: new Date(),
+            read: false
+        });
+        console.log(message.Message)
+        Ruser.notifications.push(message._id)
+        Ruser.projectMember.push(project._id)
+        await Ruser.save();
     }
+
     res.json({ updated: true });
     } catch (error) {
         console.error(error);
@@ -631,3 +664,30 @@ app.get('/checkemailexistence/:email', async (req: Request, res: Response) => {
     const exists = user ? true : false;
     res.json({ exists });
 });
+
+
+app.post('/clearmesages', isLoggedIn, async (req: Request_user, res: Response) => {
+    console.log("clearing the messages");
+    const userid = req.user?.userid;
+    if(!userid) {return res.status(401).json({ error: "Unauthorized" });}
+    const user = await userData.findById(userid)
+    if(!user) {return res.status(401).json({ error: "Unauthorized" });}
+    const notifications = user.notifications;
+    for(let i = 0; i < notifications.length; i++){
+        await notificationData.findByIdAndDelete(notifications[i])
+    }
+    user.notifications = [];
+    await user.save();
+    res.json({ cleared: true });
+});
+
+app.post('/markasread/:messageid', isLoggedIn, async (req: Request_user, res: Response) => {
+    const notification = await notificationData.findById(req.params.messageid)
+    if(!notification) {return res.status(401).json({ error: "Unauthorized" });}
+    notification.read = true;
+    await notification.save();
+    console.log("marking as read")
+    res.json({ marked: true });
+});
+
+

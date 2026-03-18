@@ -79,6 +79,30 @@ function ProfileDashboard() {
   function shownotifications(){
     setShow(prev => !prev);
   }
+  async function clkdclearmesages(){
+    try {
+      await fetch("http://localhost:3000/clearmesages", {
+        method: "POST",
+        credentials: "include"
+      });
+    } catch (error) {
+      console.log("Server connection failed:", error);
+    }
+    fetchnotifications();
+  }
+
+  async function clkreadmessage(messageid: string){
+    try {
+      await fetch(`http://localhost:3000/markasread/${messageid}`, {
+        method: "POST",
+        credentials: "include"
+      });
+    } catch (error) {
+      console.log("Server connection failed:", error);
+    }
+    fetchnotifications();
+  }
+  
   return (
     <div className={styles.container}>
 
@@ -99,10 +123,11 @@ function ProfileDashboard() {
 
       <section className={styles.notifications}>
         <h2 onClick={shownotifications}>Notifications</h2>
+        <button onClick={clkdclearmesages}>Clear messages</button>
 
-        { show && <div className={styles.notificationList}>
+        { show && <div className={styles.notificationList} >
           {messages.map((message) => (
-            <div className={styles.notificationCard} key={message._id}>
+            <div onClick={() => clkreadmessage(message._id)} className={styles.notificationCard} key={message._id} style={{backgroundColor: !message.read ? "lightgreen" : ""}}>
               {message.Message}
             </div>
           ))}
