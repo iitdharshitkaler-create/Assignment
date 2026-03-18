@@ -6,8 +6,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #091e42;
-  background-image: linear-gradient(rgba(10, 30, 60, 0.5)), url("https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?auto=format&fit=crop&q=80&w=1920");
+  background-color: white;
+  background-image: linear-gradient(rgba(40, 40, 40, 0.5)), url("https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?auto=format&fit=crop&q=80&w=1920");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -16,7 +16,7 @@
   box-sizing: border-box;
 }
 .card {
-  background: rgba(255, 255, 255, 0.9); 
+  background: rgb(255, 255, 255); 
   backdrop-filter: blur(12px); 
   padding: 48px 40px;
   border-radius: 12px;
@@ -28,27 +28,27 @@
 .title {
   text-align: center;
   margin: 0 0 32px 0;
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 700;
-  color: #091e42;
+  color:black;
 }
 
 .form {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  color: #42526e;
-  font-size: 0.8rem;
+  color: rgb(40,40,40);
   font-weight: 600;
 }
 .input {
   padding: 12px;
   border-radius: 6px;
-  border: 2px solid #dfe1e6;
-  background-color: #fafbfc;
-  font-size: 0.875rem;
-  color: #172b4d;
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  border: 2px solid rgb(200, 200, 200);
+  background-color: white;
+  color:rgb(40,40,40);
+  transition: background-color 0.2s ease,
+  border-color 0.2s ease, 
+  box-shadow 0.2s ease;
   box-sizing: border-box;
   width: 100%;
   font-family: Arial, Helvetica, sans-serif;
@@ -60,15 +60,15 @@
 
 .input:focus {
   outline: none;
-  border-color: #4c9aff;
-  background-color: #ffffff;
+  border-color: rgb(80, 150, 255);
+  background-color: white;
   box-shadow: 0 0 0 3px rgba(100, 150, 255, 0.2);
 }
 .button {
   margin-top: 32px;
   width: 100%;
   padding: 12px;
-  background-color: rgba(0, 100, 200,0.9);
+  background-color: rgb(0, 100, 200);
   color: white;
   border: none;
   border-radius: 6px;
@@ -77,7 +77,7 @@
 }
 
 .button:hover {
-  background-color: rgba(50, 100, 250,1);
+  background-color: rgb(50, 100, 250);
 }
 
 .button:active {
