@@ -4,7 +4,7 @@
 .container {
   min-height: 100vh;
   background-color: #f4f5f7;
-  background-image: linear-gradient( rgba(255, 255, 255, 0.2)), url("https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1920");
+  background-image: linear-gradient(rgba(244, 245, 247, 0.2), rgba(244, 245, 247, 0.75)), url("https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1920");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -12,14 +12,15 @@
   flex-direction: column;
   align-items: center;
   padding: 60px 20px;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   box-sizing: border-box;
 }
+
 .header {
   position: sticky;
   top: 0; 
   z-index: 100; 
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: rgba(244, 245, 247, 0.95);
   width: 100vw; 
   padding: 20px 0;
   margin-top: -60px; 
@@ -29,13 +30,18 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 48px;
+  letter-spacing: -0.02em;
   text-align: center;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8); 
 }
+
+/* LOGIN CARD */
 .loginCard {
-  background: rgba(255, 255, 255, 0.9);
-  padding: 40px 30px;
-  border-radius: 10px;
-  width: 380px;
+  background: #ffffff;
+  padding: 40px 32px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 380px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -43,6 +49,8 @@
   margin-bottom: 56px;
   box-sizing: border-box;
 }
+
+/* BUTTON */
 .actionButton {
   width: 100%;
   padding: 12px;
@@ -53,15 +61,17 @@
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  margin: 4px 0; 
+  margin: 4px 0; /* Adds breathing room around the <br> tag in your TSX */
   transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 82, 204, 0.15);
 }
+
 .actionButton:hover {
   background-color: #0047b3;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 82, 204, 0.2);
 }
+
 .actionButton:active {
   transform: translateY(1px);
   box-shadow: 0 1px 2px rgba(0, 82, 204, 0.15);
@@ -69,36 +79,43 @@
 :global(body) {
   margin: 0;
 }
+/* TABLE AREA */
 .tableWrapper {
   width: 100%;
-  max-width: 1000px; 
+  max-width: 1000px; /* Allows the table to be wide enough for real data */
   margin: 0 auto 32px auto;
   border-collapse: collapse;
   background: #ffffff;
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(9, 30, 66, 0.05), 0 0 1px rgba(9, 30, 66, 0.2);
 }
+
+/* TABLE HEADER */
 .tableHead th {
-  background-color: white;
-  color:black;
+  background-color: #f4f5f7;
+  color: #5e6c84; /* Softer text for column headers */
   text-align: left;
   padding: 14px 20px;
   font-weight: 600;
-  font-size: 0.9rem;
-  text-transform: uppercase; 
+  font-size: 0.85rem;
+  text-transform: uppercase; /* Standard for modern data tables */
+  letter-spacing: 0.04em;
   border-bottom: 2px solid #dfe1e6;
 }
+
+/* TABLE DATA */
 .tableData {
   padding: 14px 20px;
   border-bottom: 1px solid #dfe1e6;
-  color:rgb(40,40,40);
+  color: #172b4d;
   font-size: 0.95rem;
 }
 
 .tableWrapper tr {
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 
 .tableWrapper tr:hover {
-  background-color: white; 
+  background-color: #fafbfc; /* Subtle highlight when mousing over a row */
 }
