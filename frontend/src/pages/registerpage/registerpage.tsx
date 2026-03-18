@@ -72,24 +72,48 @@ function RegisterPage() {
     avatar: "",
     password: "",
   });
-
-  async function clickedregister() {
-
-    try {
-      await fetch("http://localhost:3000/registerpage", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        credentials: "include",
-        body: JSON.stringify(user)
-      });
-
+  function isValidEmail(email: string){
+    const atpos = email.indexOf("@");
+    const dotpos = email.lastIndexOf(".");
+    if(atpos <= 0) { return false; }
+    if(dotpos <= atpos + 1) { return false; }
+    if(dotpos >= email.length - 1) { return false; }
+    return true;
+}
+  async function checkemailexistence(email: string){
+     try {
+      const res = await fetch(`http://localhost:3000/checkemailexistence/${email}`);
+      const data = await res.json();
+      return data.exists;
     } catch (error) {
-      console.log("Server connection failed:", error);
+      console.log("Email check failed:", error);
+      return false; // allow registration to continue
     }
+  }
+  async function clickedregister() {
+    const emailformat = isValidEmail(user.email);
+    const exists = await checkemailexistence(user.email);
+    if(exists) {
+      alert("Email already exists");
+      return;
+    } else if (!emailformat){
+      alert("Invalid email format. Please use xyz@gmail.com");
+      return;
+    }
+      try {
+        await fetch("http://localhost:3000/registerpage", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include",
+          body: JSON.stringify(user)
+        });
 
-    navigate("/");
+      } catch (error) {
+        console.log("Server connection failed:", error);
+      }
+      navigate("/");
   }
 
   return (

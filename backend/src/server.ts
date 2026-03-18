@@ -65,6 +65,7 @@ app.post('/loginpage', async (req: Request, res: Response ) => {  // this define
 });
 
 app.post('/registerpage', async (req: Request, res: Response ) => {  // this defines a route 
+    console.log("registering");
     const {name, email, avatar, password } = req.body;
     bcrypt.genSalt(10, (err, salt) => {
         bcrypt.hash(password, salt, async (err, hash) => {
@@ -128,9 +129,17 @@ app.get('/project/:id', isLoggedIn, async (req: Request_user, res: Response) => 
     res.json({ project, role });
 });
 
-app.get('/allusers', async (req: Request, res: Response) => {
+app.get('/allusersathome', async (req: Request, res: Response) => {
     console.log("allusers");
-    const userlist = await userData.find({}, "name")
+    const userlist = await userData.find({}, "name");
+    res.json({ userlist });
+});
+app.get('/allusers/:id', async (req: Request, res: Response) => {
+    console.log("allusers");
+    let userlist = await userData.find({}, "name")
+    const project = await projectData.findById(req.params.id);
+    if(!project) {return res.status(404).json({ error: "Project not found" }); }
+    userlist = userlist.filter( (user) => user._id.toString() !== project.global_admin?.toString());
     res.json({ userlist });
 });
 
@@ -330,7 +339,8 @@ app.post('/updatetask/:id', isLoggedIn, async (req: Request_user, res: Response)
     if (!req.user || !project) {  console.log("here1");return res.status(401).json({ error: "Unauthorized" }); }
     const senderId = new mongoose.Types.ObjectId(req.user.userid);
     const task = await taskData.findById(_id);
-    if (!task) { return res.status(404).json({ error: "Task not found" }); }
+    const story = await storyData.findById(task?.storyname);
+    if (!task || !story) { return res.status(404).json({ error: "Task not found" }); }
     const Auser = await userData.findById(assigneeid);
     const Ruser = await userData.findById(reporterid);
     if (!Auser || !Ruser) {
@@ -349,9 +359,10 @@ app.post('/updatetask/:id', isLoggedIn, async (req: Request_user, res: Response)
       priority,
       dueDate
     });
+    if(!task){return }
     if (assigneeChanged) {
       const message = await notificationData.create({
-        Message: "You are assigned a task",
+        Message: "You are assigned " + task.name + " in story " + story.storyname + " of " + project.name,
         sendto: Auser._id,
         sendfrom: senderId,
         task: task._id,
@@ -367,7 +378,7 @@ app.post('/updatetask/:id', isLoggedIn, async (req: Request_user, res: Response)
     }
     if (reporterChanged) {
       const message = await notificationData.create({
-        Message: "You are reporter of a task",
+        Message: "You are reporter of" + task.name + " in story " + story.storyname + " of " + project.name,
         sendto: Ruser._id,
         sendfrom: senderId,
         task: task._id,
@@ -403,6 +414,19 @@ app.post('/addstorytoboard', async (req: Request, res: Response) => {
     }
     const tasks = story.tasks as mongoose.Types.ObjectId[];
     for (const task of tasks) {
+        let present = false;
+        for(let i = 0; i < board.columns.length; i++){
+            const column = board.columns[i];
+            if(!column) continue;
+
+            if(column.tasks.some((id) => id.toString() === task._id.toString())){
+                present = true;
+                break;
+            }
+        }
+        if(present){
+            continue;
+        }
         const column = board.columns[0];
         if(!column) continue;
         column.tasks.push(task._id)
@@ -448,12 +472,13 @@ app.post('/addcomment', isLoggedIn, async (req: Request_user ,res: Response)=>{
         updatedAt: new Date()
     })
     const task = await taskData.findById(taskid);
-    if(!task) {return res.status(401).json({ error: "Unauthorized" }); }
+    const story = await storyData.findById(task?.storyname);
+    if(!task || !story) {return res.status(401).json({ error: "Unauthorized" }); }
     task.comments.push(comment._id)
     await task.save()
     for(let i = 0; i < mentions.length; i ++) {
         const message = await notificationData.create({
-            Message: "You are mentioned",
+            Message: "You are mentioned in " + task.name + " of story " + story.storyname,
             sendto: mentions[i],
             sendfrom: req.user.userid,
             task: taskid,
@@ -549,23 +574,35 @@ app.post('/addadminproject', isLoggedIn, async (req: Request_user ,res: Response
     const user = await userData.findById(project_admin);
     const senduser = req.user;
     if(!senduser || !user || !project || !project.project_admin) { return res.status(401).json({ error: "Unauthorized" });}
-    project.project_admin.push(user._id);
-    const message = await notificationData.create({
-        Message: "You are project admin of a project",
-        sendto: user._id,
-        sendfrom: senduser.userid,
-        task: null,
-        board: null,
-        story: null,
-        project: project._id,
-        date: new Date(),
-        read: false
-      });
-    user.notifications.push(message._id);
-    user.projectAdmin.push(project._id);
-    user.projects.push(project._id);
-    user.save();
-    project.save();
+    let present = false;
+    for(let i = 0; i < project.project_admin.length; i++){
+        const userid = project.project_admin[i];
+        if(!userid) continue;
+
+        if(userid.toString() === user._id.toString()){
+            present = true;
+            break;
+        }
+    }
+    if(!present){
+        project.project_admin.push(user._id);
+        const message = await notificationData.create({
+            Message: "You are project admin of a " + project.name,
+            sendto: user._id,
+            sendfrom: senduser.userid,
+            task: null,
+            board: null,
+            story: null,
+            project: project._id,
+            date: new Date(),
+            read: false
+        });
+        user.notifications.push(message._id);
+        user.projectAdmin.push(project._id);
+        user.projects.push(project._id);
+        user.save();
+        project.save();
+    }
     res.json({ deletedcolumn :true })
 })
 
@@ -586,3 +623,11 @@ app.get('/allmembersinproject/:id', async (req: Request, res: Response) => {
     res.json({ projectmembers });
 }); 
 
+app.get('/checkemailexistence/:email', async (req: Request, res: Response) => {
+    const email = req.params.email;
+    if(!email){return res.status(401).json({ error: "Unauthorized" });}
+    console.log(email);
+    const user = await userData.findOne({ email });
+    const exists = user ? true : false;
+    res.json({ exists });
+});

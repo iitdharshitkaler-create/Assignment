@@ -1,5 +1,6 @@
 
 export interface Project {
+  _id: string;
   name: string;
   description: string;
   project_admin: User[];
@@ -12,6 +13,7 @@ export interface User {
 }
 
 export interface Column {
+  _id: string;
   name: string;
   tasks: Task[];
 }
@@ -51,4 +53,18 @@ export interface Task {
   resolvedat: string;
   closedat: string;
   auditlog: string[];
+}
+
+
+export interface Notification {
+  _id: string;
+  Message: string;
+  sendto: User;
+  sendfrom: User;
+  task: Task;
+  board: Board;
+  project: Project;
+  story: Story;
+  date: string;
+  read: boolean;
 }

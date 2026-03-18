@@ -167,64 +167,7 @@ import styles from "./loginpage.module.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
-interface Project {
-  _id: string;
-  name: string;
-  description: string;
-}
-
-interface User {
-  avatar: string;
-  name: string;
-  _id: string;
-}
-
-interface Task {
-  _id: string;
-  boardname: string;
-  storyname: string;
-  name: string;
-  description: string;
-  assigneeid: string;
-  assignee: string;
-  reporterid: string;
-  reporter: string;
-  status: string;
-  dueDate: string;
-  priority: string;
-}
-
-interface Story {
-  _id: string;
-  boardname: string;
-  storyname: string;
-  status: string;
-  tasks: [string];
-}
-
-interface Board {
-  _id: string;
-  projectname: string;
-  todo: Task[];
-  inprogress: Task[];
-  done: Task[];
-  stories: Story[];
-  __v: number;
-}
-
-interface Notification {
-  _id: string;
-  Message: string;
-  sendto: User;
-  sendfrom: User;
-  task: Task;
-  board: Board;
-  project: Project;
-  story: Story;
-  date: string;
-  read: boolean;
-}
+import type { User, Project, Notification} from "../../types/type";
 
 function ProfileDashboard() {
 
@@ -296,7 +239,10 @@ function ProfileDashboard() {
   function clkcreateproject() {
     navigate("/createnew");
   }
-
+  const [show, setShow] = useState(false);
+  function shownotifications(){
+    setShow(prev => !prev);
+  }
   return (
     <div className={styles.container}>
 
@@ -316,15 +262,15 @@ function ProfileDashboard() {
       </header>
 
       <section className={styles.notifications}>
-        <h2>Notifications</h2>
+        <h2 onClick={shownotifications}>Notifications</h2>
 
-        <div className={styles.notificationList}>
+        { show && <div className={styles.notificationList}>
           {messages.map((message) => (
             <div className={styles.notificationCard} key={message._id}>
               {message.Message}
             </div>
           ))}
-        </div>
+        </div>}
       </section>
 
       <main className={styles.main}>

@@ -439,7 +439,7 @@ function BoardInfo() {
     const [allusers, setAllusers] = useState<User[]>([]);
 
     useEffect(() => {
-        fetch(`http://localhost:3000/allusers`, {
+        fetch(`http://localhost:3000/allusers/${id}`, {
             credentials: "include",
         })
             .then(res => res.json())
