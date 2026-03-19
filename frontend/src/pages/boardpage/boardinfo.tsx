@@ -411,6 +411,7 @@ function BoardInfo() {
     const [role, setRole] = useState("");
 
     const [project, setProject] = useState<Project>({
+        _id: "",
         name: "",
         description: "",
         project_admin: [],
@@ -692,6 +693,17 @@ function BoardInfo() {
             });
     }, []);
 
+    async function clkdeletestory(storyid: string){
+        try {
+            await fetch(`http://localhost:3000/deletestory/${storyid}/${id}`, {
+                method: "POST",
+                credentials: "include",
+            });
+        } catch (error) {
+            console.log("Server connection failed:", error);
+        }
+        loadBoard();
+    }
     return (
         <div className={styles.container}>
             <header>
@@ -830,6 +842,7 @@ function BoardInfo() {
 
                                     <td>
                                         {role === "project_admin" && (
+                                            <div>
                                             <button
                                                 className={styles.button}
                                                 onClick={() =>
@@ -840,13 +853,11 @@ function BoardInfo() {
                                             >
                                                 Add to Board
                                             </button>
+                                                <button className={styles.button} onClick={() => clkdeletestory(story._id)} >
+                                                Delete
+                                            </button>
+                                        </div>
                                         )}
-
-                                        <button
-                                            className={styles.button}
-                                        >
-                                            Delete
-                                        </button>
                                     </td>
                                 </tr>
                             ))}

@@ -711,5 +711,46 @@ app.post('/archiveproject/:projectid', isLoggedIn, async (req: Request_user, res
     res.json({ archived: true });
 });
 
+app.post('/deletestory/:storyid/:id', isLoggedIn, async (req: Request_user, res: Response) => {
+    const story = await storyData.findById(req.params.storyid)
+    const project = await projectData.findById(req.params.id)
+    console.log("here1");
+    if(!story || !project) {return res.status(401).json({ error: "Unauthorized" });}
+    for(let i = 0; i < story.tasks.length; i++){
+        const task = await taskData.findById(story.tasks[i]);
+        const Auser = await userData.findById(task?.assigneeid);
+        const Ruser = await userData.findById(task?.assigneeid);
+        console.log("here2")
+        if(Auser) {
+             Auser.archivedprojects = Auser.archivedprojects.filter((id) => id.toString() !== project._id.toString());
+            Auser.projects = Auser.projects.filter((id) => id.toString() !== project._id.toString());
+            Auser.save();
+        }
+        console.log("here3")
+        if(Ruser) {
+            Ruser.archivedprojects = Ruser.archivedprojects.filter((id) => id.toString() !== project._id.toString());
+            Ruser.projects = Ruser.projects.filter((id) => id.toString() !== project._id.toString());
+            Ruser.save();
+        }
+        console.log("here4")
+        const board = await boardData.findById(story.boardname);
+        if(!board || !task){
+            return;
+        }
+        console.log("here5")
+        for(let i = 0; i < board.columns.length; i++){
+            const column = board.columns[i]
+            if(!column) continue;
+            column.tasks = column.tasks.filter((id) => id.toString() !== task._id.toString());        }
+        board?.save();
+        console.log("here6");
+        await taskData.findByIdAndDelete(task?._id);
+    }
+    console.log("here7")
+    await storyData.findByIdAndDelete(story.id);
+    console.log("Deleting the story")
+    res.json({ archived: true });
+});
+
 
 
