@@ -484,13 +484,13 @@ function BoardInfo() {
                             <div
                                 key={index}
                                 draggable={
-                                    task.assigneeid === user._id
+                                    (task.assigneeid === user._id || role === "project_admin")
                                 }
                                 onDragStart={() =>
                                     handleDragStart(task._id, pos)
                                 }
                                 className={`${styles.task} ${
-                                    task.assigneeid === user._id
+                                    (task.assigneeid === user._id || role === "project_admin")
                                         ? ""
                                         : styles.taskDisabled
                                 }`}

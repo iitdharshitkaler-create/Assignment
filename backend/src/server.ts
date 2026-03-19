@@ -167,7 +167,19 @@ app.post('/addmemberinproject', async (req: Request, res: Response ) => {  // th
     if (!this_project || !user) {
         return res.status(404).json({ error: "Project not found" });
     }
-    user.projects.push(project._id); 
+    let present = false;
+    for(let i = 0; i < user.projects.length; i++){
+        const projectid = user.projects[i];
+        if(!projectid) continue;
+
+        if(projectid.toString() === project._id.toString()){
+            present = true;
+            break;
+        }
+    }
+    if(!present){
+        user.projects.push(project._id); 
+    }
     user.projectViewer.push(project._id);
     await user.save();
     res.json({ added: true });
@@ -380,6 +392,17 @@ app.post('/updatetask/:id', isLoggedIn, async (req: Request_user, res: Response)
     });
     if(!task){return }
     if (assigneeChanged) {
+        let present = false;
+        for(let i = 0; i < Auser.projectMember.length; i++){
+            const projectid = Auser.projectMember[i];
+            if(!projectid) continue;
+
+            if(projectid.toString() === project._id.toString()){
+                present = true;
+                break;
+            }
+        }
+        if(!present){
         const message = await notificationData.create({
             Message: `You are assigned ${task.name} in story ${story.storyname} of project ${project.name}`,
             sendto: Auser._id,
@@ -393,8 +416,9 @@ app.post('/updatetask/:id', isLoggedIn, async (req: Request_user, res: Response)
         });
         Auser.notifications.push(message._id)
         Auser.projectMember.push(project._id)
-        await Auser.save();
+        await Auser.save();}
     } else {
+
         const message = await notificationData.create({
             Message: `Details of  ${task.name} in ${story.storyname} are updated`,
             sendto: Auser._id,
