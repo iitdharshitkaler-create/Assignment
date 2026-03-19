@@ -15,6 +15,14 @@ import mongoose from "mongoose";
 const app = express();
 const PORT = 3000;
 
+interface Request_user extends Request {
+  user?: {
+    email: string;
+    userid: string;
+    projects: [];
+  };
+}
+
 const allowit = {
     origin: "http://localhost:5173",
     methods: "GET, POST, PUT",
@@ -79,13 +87,6 @@ app.post('/registerpage', async (req: Request, res: Response ) => {  // this def
     })
 });
 
-interface Request_user extends Request {
-  user?: {
-    email: string;
-    userid: string;
-    projects: [];
-  };
-}
 
 app.post('/createnew', isLoggedIn, async (req: Request_user, res: Response ) => {  
     const user = await userData.findById((req.user as { userid: string }).userid)
