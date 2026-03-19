@@ -107,8 +107,14 @@ app.post('/createnew', isLoggedIn, async (req: Request_user, res: Response ) => 
 });
 
 app.get('/projects', isLoggedIn, async (req: Request_user, res: Response) => {
-    const user = await userData.findById((req.user as { userid: string }).userid).populate("projects");
-    res.json({ projects: user?.projects });
+    const user = await userData.findById((req.user as { userid: string }).userid).populate("projects").populate("archivedprojects");;
+    const projects = user?.projects;
+    const archiveprojects = user?.archivedprojects;
+    if(!archiveprojects || !projects){return res.status(400).json({ error: "User not found" }); }
+    const filteredProjects = projects.filter((project) => {
+        return !archiveprojects.includes(project._id);
+    });
+    res.json({ projects: filteredProjects, archiveprojects });
 });
 
 app.get('/profile', isLoggedIn, async (req: Request_user, res: Response) => {
@@ -690,5 +696,20 @@ app.post('/markasread/:messageid', isLoggedIn, async (req: Request_user, res: Re
     console.log("marking as read")
     res.json({ marked: true });
 });
+
+app.post('/archiveproject/:projectid', isLoggedIn, async (req: Request_user, res: Response) => {
+    const project = await projectData.findById(req.params.projectid)
+    const userid = req.user?.userid;
+    if(!userid || !project) {return res.status(401).json({ error: "Unauthorized" });}
+    const user = await userData.findById(userid)
+    if(!user) {return res.status(401).json({ error: "Unauthorized" });}
+    user.archivedprojects.push(project._id);
+    user.projects = user.projects.filter((id) => id.toString() !== project._id.toString());
+    await user.save();
+    console.log(user.archivedprojects);
+    console.log("set as archived")
+    res.json({ archived: true });
+});
+
 
 

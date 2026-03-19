@@ -7,6 +7,7 @@ import type { User, Project, Notification} from "../../types/type";
 
 function ProfileDashboard() {
 
+  const [archiveprojects, setArchiveprojects] = useState<Project[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [messages, setMessages] = useState<Notification[]>([]);
   const [user, setUser] = useState<User>({
@@ -16,15 +17,18 @@ function ProfileDashboard() {
   });
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetch("http://localhost:3000/projects", {
+  async function loadproject(){
+    await fetch("http://localhost:3000/projects", {
       credentials: "include"
     })
       .then(res => res.json())
       .then(data => {
         setProjects(data.projects);
+        setArchiveprojects(data.archiveprojects);
       });
+  }
+  useEffect(() => {
+    loadproject()
   }, []);
 
   useEffect(() => {
@@ -102,7 +106,21 @@ function ProfileDashboard() {
     }
     fetchnotifications();
   }
-  
+  async function clkdarchive(projectid: string){
+    try {
+      await fetch(`http://localhost:3000/archiveproject/${projectid}`, {
+        method: "POST",
+        credentials: "include"
+      });
+    } catch (error) {
+      console.log("Server connection failed:", error);
+    }
+    loadproject();
+  }
+  const [showarchived, setShowarchieved] = useState(false);
+  function showarchiveproject() {
+    setShowarchieved(prev => !prev);
+  }
   return (
     <div className={styles.container}>
 
@@ -150,14 +168,24 @@ function ProfileDashboard() {
               <div key={project._id} className={styles.projectItem}>
                 <Link to={`/projectinfo/${project._id}`}>
                   {project.name}
-                </Link>
+                </Link> 
+                <button onClick={() => clkdarchive(project._id)}>Archive</button>
               </div>
             ))}
           </div>
 
-          <button className={styles.button}>
-            See Completed Projects
+          <button className={styles.button} onClick={showarchiveproject}>
+            See Archived Projects
           </button>
+         { showarchived && <div className={styles.projectList}>
+            {archiveprojects.map((project, index) => (
+              <div key={index} className={styles.projectItem}>
+                <Link to={`/projectinfo/${project._id}`}>
+                  {project.name}
+                </Link> 
+              </div>
+            ))}
+          </div>}
 
           <hr />
 
