@@ -498,12 +498,12 @@ onChange={(e)=>setEdittask({...edittask,dueDate:e.target.value})}/>
 <td>{task.priority}</td>
 
 <td className={styles.actions}>
-
-<button onClick={()=>clkedittask(task)}>Edit</button>
-
+{role==="project_admin" &&
+<button onClick={()=>clkedittask(task)}>Edit</button>}
+{role==="project_admin" &&
 <button onClick={()=>clkremovetask(index)}>
-Remove
-</button>
+Remove 
+</button>}
 
 <Link to={`/comment/${id}/${boardid}/${boardpos}/${storyid}/${task._id}`}>
 Comments
@@ -519,7 +519,7 @@ Comments
 
 </table>
 
-{(role==="project_admin" || role==="member") &&
+{(role==="project_admin" || role === "member") &&
 <button className={styles.button} onClick={addtask}>
 Add Task
 </button>

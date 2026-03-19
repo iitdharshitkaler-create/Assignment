@@ -327,12 +327,24 @@ app.post('/addtaskinstory', isLoggedIn, async (req: Request_user, res: Response 
     res.json({ added: true });
 });
 
-app.post('/removetaskinstory/:storyid', async (req: Request, res: Response ) => {  // this defines a route 
+app.post('/removetaskinstory/:storyid',isLoggedIn, async (req: Request, res: Response ) => {  // this defines a route 
     console.log("removetaskinstory");
-
     const { index } = req.body;
     const story = await storyData.findById(req.params.storyid);
-    if(!story){ return  res.status(404).json({ error: "Document missing" });}
+    const taskid = story?.tasks[index];
+    if(!story || !taskid){ return  res.status(404).json({ error: "Document missing" });}
+    const board = await boardData.findById(story.boardname);
+        if(!board || !taskid){
+            return;
+        }
+        console.log("here5")
+        for(let i = 0; i < board.columns.length; i++){
+            const column = board.columns[i]
+            if(!column) continue;
+            column.tasks = column.tasks.filter((id) => id.toString() !== taskid.toString());        }
+        board?.save();
+        console.log("here6");
+        await taskData.findByIdAndDelete(taskid);
     story.tasks.splice(Number(index), 1)
     await story.save();
     res.json({ removed: true });
@@ -718,21 +730,21 @@ app.post('/deletestory/:storyid/:id', isLoggedIn, async (req: Request_user, res:
     if(!story || !project) {return res.status(401).json({ error: "Unauthorized" });}
     for(let i = 0; i < story.tasks.length; i++){
         const task = await taskData.findById(story.tasks[i]);
-        const Auser = await userData.findById(task?.assigneeid);
-        const Ruser = await userData.findById(task?.assigneeid);
-        console.log("here2")
-        if(Auser) {
-             Auser.archivedprojects = Auser.archivedprojects.filter((id) => id.toString() !== project._id.toString());
-            Auser.projects = Auser.projects.filter((id) => id.toString() !== project._id.toString());
-            Auser.save();
-        }
-        console.log("here3")
-        if(Ruser) {
-            Ruser.archivedprojects = Ruser.archivedprojects.filter((id) => id.toString() !== project._id.toString());
-            Ruser.projects = Ruser.projects.filter((id) => id.toString() !== project._id.toString());
-            Ruser.save();
-        }
-        console.log("here4")
+        // const Auser = await userData.findById(task?.assigneeid);
+        // const Ruser = await userData.findById(task?.assigneeid);
+        // console.log("here2")
+        // if(Auser) {
+        //      Auser.archivedprojects = Auser.archivedprojects.filter((id) => id.toString() !== project._id.toString());
+        //     Auser.projects = Auser.projects.filter((id) => id.toString() !== project._id.toString());
+        //     Auser.save();
+        // }
+        // console.log("here3")
+        // if(Ruser) {
+        //     Ruser.archivedprojects = Ruser.archivedprojects.filter((id) => id.toString() !== project._id.toString());
+        //     Ruser.projects = Ruser.projects.filter((id) => id.toString() !== project._id.toString());
+        //     Ruser.save();
+        // }
+        // console.log("here4")
         const board = await boardData.findById(story.boardname);
         if(!board || !task){
             return;
