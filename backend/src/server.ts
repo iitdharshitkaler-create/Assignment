@@ -12,6 +12,7 @@ import notificationData from "../database/notifications";
 import commentData from "../database/comment";
 import "../database/task";
 import mongoose from "mongoose";
+
 const app = express();
 const PORT = 3000;
 
@@ -124,6 +125,7 @@ app.get('/profile', isLoggedIn, async (req: Request_user, res: Response) => {
 });
 
 app.get('/project/:id', isLoggedIn, async (req: Request_user, res: Response) => {
+    console.log("project details")
     const project = await projectData.findById(req.params.id);
     const user = await userData.findById((req.user as { userid: string }).userid);
     if(!project || !user){ return res.status(404).json({ error: "Project not found" }); }
@@ -132,7 +134,6 @@ app.get('/project/:id', isLoggedIn, async (req: Request_user, res: Response) => 
     else if(project.project_admin.includes(user._id)){
         role = "project_admin";
     }
-    console.log(role);
     res.json({ project, role });
 });
 
@@ -754,21 +755,6 @@ app.post('/deletestory/:storyid/:id', isLoggedIn, async (req: Request_user, res:
     if(!story || !project) {return res.status(401).json({ error: "Unauthorized" });}
     for(let i = 0; i < story.tasks.length; i++){
         const task = await taskData.findById(story.tasks[i]);
-        // const Auser = await userData.findById(task?.assigneeid);
-        // const Ruser = await userData.findById(task?.assigneeid);
-        // console.log("here2")
-        // if(Auser) {
-        //      Auser.archivedprojects = Auser.archivedprojects.filter((id) => id.toString() !== project._id.toString());
-        //     Auser.projects = Auser.projects.filter((id) => id.toString() !== project._id.toString());
-        //     Auser.save();
-        // }
-        // console.log("here3")
-        // if(Ruser) {
-        //     Ruser.archivedprojects = Ruser.archivedprojects.filter((id) => id.toString() !== project._id.toString());
-        //     Ruser.projects = Ruser.projects.filter((id) => id.toString() !== project._id.toString());
-        //     Ruser.save();
-        // }
-        // console.log("here4")
         const board = await boardData.findById(story.boardname);
         if(!board || !task){
             return;
@@ -789,4 +775,32 @@ app.post('/deletestory/:storyid/:id', isLoggedIn, async (req: Request_user, res:
 });
 
 
+app.get('/getprojectboardstoread/:id', async (req: Request, res: Response) => {
+    console.log("getprojectboards");
+    const project = await projectData.findById(req.params.id).populate({
+            path: "boards",
+            populate: [
+                {
+                    path: "columns.tasks",  
+                },
+                {
+                    path: "stories",
+                    populate: {
+                        path: "tasks"       
+                    }
+                }
+            ]
+});
+    const boards = project?.boards;
+    res.json({ boards });
+});
 
+
+app.get('/projecttoread/:id', async (req: Request, res: Response) => {
+    console.log("project details")
+    const project = await projectData.findById(req.params.id).populate("global_admin");
+    if(!project ){ return res.status(404).json({ error: "Project not found" }); }
+    const global_admin = await userData.findById(project.global_admin);
+    console.log(global_admin);
+    res.json({ project, global_admin });
+});

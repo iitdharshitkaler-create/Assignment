@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
-
 import Main from "./pages/homepage/main"
 import ProfileDashboard from "./pages/user/profilepage"
 import LoginPage from "./pages/loginpage/loginpage"
 import RegisterPage from "./pages/registerpage/registerpage"
 import CreateNewProject from "./pages/projectpage/createnew"
 import ProjectInfo from "./pages/projectpage/projectinfo"
+import ProjectReadOnly from "./pages/projectpage/projectviewpage"
 import BoardInfo from "./pages/boardpage/boardinfo"
 import StoryInfo from "./pages/story/storypage"
 import CommentInfo from "./pages/comments/commentpage"
@@ -24,6 +24,7 @@ function App() {
         <Route path="/projectinfo/:id/:boardid/:boardpos" element={<BoardInfo />} />
         <Route path="/storyinfo/:id/:boardid/:boardpos/:storyid" element={<StoryInfo />} />
         <Route path="/comment/:id/:boardid/:boardpos/:storyid/:taskid" element={<CommentInfo />} />
+        <Route path= "/projectview/:projectid" element= { <ProjectReadOnly />} />
       </Routes>
     </BrowserRouter>
   )

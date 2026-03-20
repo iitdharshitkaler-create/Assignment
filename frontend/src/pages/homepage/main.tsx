@@ -1,5 +1,3 @@
-
-
 import { useNavigate  } from "react-router"
 import styles from "./main.module.css"
 import { useEffect, useState } from "react";
@@ -42,10 +40,12 @@ function App() {
         });
     }, []); 
 
-  return (
-    
-    <div className={styles.container}>
+    function showdetailsofproject(projectid: string){
+      navigate(`/projectview/${projectid}`);
+    }
 
+  return (
+    <div className={styles.container}>
       <h1 className = {styles.header}>Project Management System</h1>
       <div className={styles.loginCard}>
       <button className={styles.actionButton} onClick={loginaccount}>
@@ -80,6 +80,7 @@ function App() {
           <tbody>{allprojects.map(project => (
               <tr key={project._id}>
                 <td className={styles.tableData}>{project.name}</td>
+                <button onClick={() => showdetailsofproject(project._id)}>View Details </button>
               </tr>
             ))}
           </tbody>
