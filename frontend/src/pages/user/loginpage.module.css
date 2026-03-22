@@ -64,13 +64,15 @@
 }
 
 .notifications h2 {
+  text-align: center;
   margin: 0 0 16px 0;
   font-size: 1.25rem;
-  font-weight: 600;
-  color: rgb(40,40,40);
-  border-radius : 12px;
-
-  background-color: white;
+  font-weight: lighter;
+  color: white;
+  border-radius : 4px;
+  background-color: rgb(19, 75, 228);
+  cursor: pointer;
+  line-height: 200%;
 }
 
 .notificationList {

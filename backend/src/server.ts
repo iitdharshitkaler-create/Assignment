@@ -53,12 +53,12 @@ app.listen(PORT, () => {
   console.log(`Server running on ${PORT}`);
 });
 
-app.post('/logout', (req: Request, res: Response ) => {  // this defines a route 
+app.post('/logout', (req: Request, res: Response ) => {  
     res.clearCookie("token");
     res.json({ logout: true });
 })
 
-app.post('/loginpage', async (req: Request, res: Response ) => {  // this defines a route 
+app.post('/loginpage', async (req: Request, res: Response ) => {  
     const {email, password} = req.body;
 
     const user = await userData.findOne({email});
@@ -73,7 +73,7 @@ app.post('/loginpage', async (req: Request, res: Response ) => {  // this define
     })
 });
 
-app.post('/registerpage', async (req: Request, res: Response ) => {  // this defines a route 
+app.post('/registerpage', async (req: Request, res: Response ) => {  
     console.log("registering");
     const {name, email, avatar, password } = req.body;
     bcrypt.genSalt(10, (err, salt) => {
@@ -88,7 +88,6 @@ app.post('/registerpage', async (req: Request, res: Response ) => {  // this def
     })
 });
 
-
 app.post('/createnew', isLoggedIn, async (req: Request_user, res: Response ) => {  
     const user = await userData.findById((req.user as { userid: string }).userid)
     const { name, description } = req.body;
@@ -98,7 +97,7 @@ app.post('/createnew', isLoggedIn, async (req: Request_user, res: Response ) => 
         global_admin: user._id, 
         name,
         description,
-        project_admin: [ ], //{ type: mongoose.Schema.Types.ObjectId, ref: "user"},
+        project_admin: [ ], 
         members: [ ],
         boards: [],
     });
@@ -124,17 +123,24 @@ app.get('/profile', isLoggedIn, async (req: Request_user, res: Response) => {
     res.json({_id: user?._id, name: user?.name, avatar: user?.avatar });
 });
 
-app.get('/project/:id', isLoggedIn, async (req: Request_user, res: Response) => {
-    console.log("project details")
-    const project = await projectData.findById(req.params.id);
-    const user = await userData.findById((req.user as { userid: string }).userid);
-    if(!project || !user){ return res.status(404).json({ error: "Project not found" }); }
-    let role = "viewer"
-    if(user._id.toString() === project?.global_admin?.toString()){ role = "global_admin" }
-    else if(project.project_admin.includes(user._id)){
-        role = "project_admin";
+app.post('/updateprojectdesc/:id', isLoggedIn, async (req: Request_user, res: Response) => {
+    console.log("update project description");
+    try {
+        const { description } = req.body;
+        const project = await projectData.findById(req.params.id);
+        if (!project) {
+            return res.status(404).json({ error: "Project not found" });
+        }
+        if (req.user && project.global_admin?.toString() !== req.user.userid) {
+            return res.status(403).json({ error: "Only the global admin can edit the project description" });
+        }
+        project.description = description;
+        await project.save();
+        res.json({ updated: true });
+    } catch (error) {
+        console.error("Error updating description:", error);
+        res.status(500).json({ error: "Server error" });
     }
-    res.json({ project, role });
 });
 
 app.get('/allusersathome', async (req: Request, res: Response) => {
@@ -142,6 +148,7 @@ app.get('/allusersathome', async (req: Request, res: Response) => {
     const userlist = await userData.find({}, "name");
     res.json({ userlist });
 });
+
 app.get('/allusers/:id', async (req: Request, res: Response) => {
     console.log("allusers");
     let userlist = await userData.find({}, "name")
@@ -151,12 +158,48 @@ app.get('/allusers/:id', async (req: Request, res: Response) => {
     res.json({ userlist });
 });
 
+app.get('/projectusers/:id', async (req: Request, res: Response) => {
+    try {
+        const project = await projectData.findById(req.params.id)
+            .populate("members", "name")
+            .populate("project_admin", "name");
+        
+        if(!project) return res.status(404).json({ error: "Project not found" });
+
+        const globalAdmin = await userData.findById(project.global_admin, "name");
+        
+        const usersMap = new Map();
+        
+        if (globalAdmin && globalAdmin._id) {
+            usersMap.set(globalAdmin._id.toString(), globalAdmin);
+        }
+        
+        if (project.project_admin) {
+            project.project_admin.forEach((admin: any) => {
+                if (admin && admin._id && admin.name) usersMap.set(admin._id.toString(), admin);
+            });
+        }
+        
+        if (project.members) {
+            project.members.forEach((member: any) => {
+                if (member && member._id && member.name) usersMap.set(member._id.toString(), member);
+            });
+        }
+
+        res.json({ users: Array.from(usersMap.values()) });
+    } catch (error) {
+        console.error("Error fetching project users:", error); // This will show in your terminal if it fails!
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+
 app.get('/allprojects', async (req: Request, res: Response) => {
     const projectlist = await projectData.find({}, "name")
     res.json({ projectlist });
 });
 
-app.post('/addmemberinproject', async (req: Request, res: Response ) => {  // this defines a route 
+app.post('/addmemberinproject', async (req: Request, res: Response ) => {  
     console.log("adding member inproject");
     const {choosenuser, project} = req.body;
     const user = await userData.findById( choosenuser );
@@ -193,7 +236,7 @@ app.get('/getprojectmembers/:id', async (req: Request, res: Response) => {
     res.json({ members });
 }); 
 
-app.post('/addboardinproject', async (req: Request, res: Response ) => {  // this defines a route 
+app.post('/addboardinproject', async (req: Request, res: Response ) => { 
     console.log("addboardinproject");
     const { project } = req.body;
     const board = await boardData.create({
@@ -221,7 +264,7 @@ app.get('/getprojectboards/:id', async (req: Request, res: Response) => {
     res.json({ boards });
 });
 
-app.post('/putstoryonboard/:id', async (req: Request, res: Response ) => {  // this defines a route 
+app.post('/putstoryonboard/:id', async (req: Request, res: Response ) => {  
     console.log("putting story on board");
     const [story, index] = req.body;
     const projectId = req.params.id;
@@ -256,26 +299,86 @@ app.post('/deleteboard/:id', async (req: Request, res: Response) => {
     res.json({ deleted: true });
 });
 
-app.post('/movetaskonboard', async (req: Request, res: Response ) => {  // this defines a route 
-    console.log("movetaskonboard");
-    const { boardid, taskid, from, to }  = req.body;
-    console.log(from);
-    console.log(to);
-    const board = await boardData.findById(boardid);
-    if (!board) { return res.status(404).json({ error: "Board document missing" }); }
-    const fromcolumn = board.columns[from as number];
-    const tocolumn = board.columns[to as number];
-    if(!tocolumn || !fromcolumn){return res.status(404).json({ error: "Board document missing" }); }
-    if(tocolumn.name === "IN-PROGRESS" && tocolumn.tasks.length >= 5 ) { return res.json({ error: "WIP limit reached for INPREVIEW column" }); }
-    fromcolumn.tasks = fromcolumn.tasks.filter( (id) => id.toString() !== taskid );
-    tocolumn.tasks.push(taskid);
-    await board.save();
-    await taskData.findByIdAndUpdate(taskid, {
-        status: tocolumn?.name
-    })
-    res.json({ moved: true });
-});
 
+
+
+
+
+
+
+app.post('/movetaskonboard', async (req: Request, res: Response) => {
+    console.log("movetaskonboard");
+    const { boardid, taskid, from, to } = req.body;
+
+    try {
+        const board = await boardData.findById(boardid);
+        if (!board || !board.columns) { 
+            return res.status(404).json({ error: "Board document or columns missing" }); 
+        }
+
+        const fromcolumn = board.columns[Number(from)];
+        const tocolumn = board.columns[Number(to)];
+
+        if (!tocolumn || !fromcolumn) {
+            return res.status(404).json({ error: "Specific columns missing" });
+        }
+
+        if (tocolumn.name === "IN-PROGRESS" && tocolumn.tasks && tocolumn.tasks.length >= 5) {
+            return res.json({ error: "WIP limit reached for IN-PROGRESS column" });
+        }
+
+        if (fromcolumn.tasks) {
+            fromcolumn.tasks = fromcolumn.tasks.filter((id) => id && id.toString() !== taskid);
+        }
+        if (tocolumn.tasks) {
+            tocolumn.tasks.push(taskid as any);
+        }
+        
+        board.markModified('columns'); 
+        await board.save();
+
+        await taskData.findByIdAndUpdate(taskid, {
+            status: tocolumn.name || ""
+        });
+
+        const task = await taskData.findById(taskid);
+        if (task && task.storyname) {
+            const story = await storyData.findById(task.storyname);
+
+            if (story && story.tasks) {
+                let minStatus = story.status || "TODO";
+                
+                const storyTasks = story.tasks
+                    .filter(id => id != null)
+                    .map(id => id.toString());
+
+                for (let i = 0; i < board.columns.length; i++) {
+                    const currentColumn = board.columns[i];
+                    if (!currentColumn || !currentColumn.tasks) continue;
+
+                    const colTasks = currentColumn.tasks
+                        .filter(id => id != null)
+                        .map(id => id.toString());
+
+                    const taskInThisColumn = storyTasks.some((id) => colTasks.includes(id));
+
+                    if (taskInThisColumn && currentColumn.name) {
+                        minStatus = currentColumn.name; 
+                        break; 
+                    }
+                }
+
+                story.status = minStatus;
+                await story.save();
+            }
+        }
+
+        res.json({ moved: true });
+    } catch (error) {
+        console.error("Error moving task:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+});
 
 app.get('/board/:id/:boardpos', isLoggedIn, async (req: Request_user, res: Response) => {
     console.log("board");
@@ -309,9 +412,7 @@ app.get('/story/:storyid/:id', isLoggedIn, async (req: Request_user, res: Respon
     res.json({ story, projectname, role });
 });
 
-
-
-app.post('/addtaskinstory', isLoggedIn, async (req: Request_user, res: Response ) => {  // this defines a route 
+app.post('/addtaskinstory', isLoggedIn, async (req: Request_user, res: Response ) => {  
     console.log("addtaskinstory")
     const { taskname, taskdescription, tasktype, storyid } = req.body;
     console.log(req.body);
@@ -340,27 +441,49 @@ app.post('/addtaskinstory', isLoggedIn, async (req: Request_user, res: Response 
     res.json({ added: true });
 });
 
-app.post('/removetaskinstory/:storyid',isLoggedIn, async (req: Request, res: Response ) => {  // this defines a route 
+
+
+
+
+
+
+
+
+
+app.post('/removetaskinstory/:storyid', isLoggedIn, async (req: Request, res: Response) => {
     console.log("removetaskinstory");
-    const { index } = req.body;
-    const story = await storyData.findById(req.params.storyid);
-    const taskid = story?.tasks[index];
-    if(!story || !taskid){ return  res.status(404).json({ error: "Document missing" });}
-    const board = await boardData.findById(story.boardname);
-        if(!board || !taskid){
-            return;
+    try {
+        const { index } = req.body;
+        const storyId = req.params.storyid as string;
+        const story = await storyData.findById(storyId);
+        
+        if (!story || !story.tasks) return res.status(404).json({ error: "Document missing" });
+        
+        const taskid = story.tasks[index];
+        if (!taskid) return res.status(404).json({ error: "Document missing" });
+        
+        const board = await boardData.findById(story.boardname);
+        if (board && board.columns) {
+            for (let i = 0; i < board.columns.length; i++) {
+                const column = board.columns[i];
+                if (!column || !column.tasks) continue;
+                column.tasks = column.tasks.filter(id => id && id.toString() !== taskid.toString());
+            }
+            board.markModified('columns');
+            await board.save();
         }
-        console.log("here5")
-        for(let i = 0; i < board.columns.length; i++){
-            const column = board.columns[i]
-            if(!column) continue;
-            column.tasks = column.tasks.filter((id) => id.toString() !== taskid.toString());        }
-        board?.save();
-        console.log("here6");
+        
         await taskData.findByIdAndDelete(taskid);
-    story.tasks.splice(Number(index), 1)
-    await story.save();
-    res.json({ removed: true });
+        story.tasks.splice(Number(index), 1);
+        await story.save();
+
+        await syncStoryStatus(storyId);
+
+        res.json({ removed: true });
+    } catch (error) {
+        console.error("Error removing task:", error);
+        res.status(500).json({ error: "Server error" });
+    }
 });
 
 app.post('/updatetask/:id', isLoggedIn, async (req: Request_user, res: Response) => {
@@ -476,40 +599,95 @@ app.post('/updatetask/:id', isLoggedIn, async (req: Request_user, res: Response)
     }
 });
 
+
+
+
+
+
+async function syncStoryStatus(storyId: string) {
+    try {
+        const story = await storyData.findById(storyId);
+        if (!story) return;
+
+        const board = await boardData.findById(story.boardname);
+        if (!board || !board.columns || board.columns.length === 0) return;
+
+        let minStatus = board.columns[0]?.name || "TODO";
+
+        if (story.tasks && story.tasks.length > 0) {
+            const storyTaskIds = story.tasks.map(id => id.toString());
+
+            for (let i = 0; i < board.columns.length; i++) {
+                const currentColumn = board.columns[i];
+                if (!currentColumn || !currentColumn.tasks) continue;
+
+                const colTasks = currentColumn.tasks.map((id: any) => id.toString());
+                const hasTask = storyTaskIds.some(id => colTasks.includes(id));
+                
+                if (hasTask && currentColumn.name) {
+                    minStatus = currentColumn.name;
+                    break; 
+                }
+            }
+        }
+
+        await storyData.updateOne({ _id: storyId }, { $set: { status: minStatus } });
+    } catch (error) {
+        console.error("Error syncing status:", error);
+    }
+}
+
+
+
+
+
 app.post('/addstorytoboard', async (req: Request, res: Response) => {
     console.log("addstorytoboard");
     const { storyid } = req.body;
-    const story = await storyData
-        .findById(storyid)
-        .populate("tasks");
-    if (!story) {
-        return res.status(404).json({ error: "Story not found" });
-    }
-    const board = await boardData.findById(story.boardname);
-    if (!board) {
-        return res.status(404).json({ error: "Board not found" });
-    }
-    const tasks = story.tasks as mongoose.Types.ObjectId[];
-    for (const task of tasks) {
-        let present = false;
-        for(let i = 0; i < board.columns.length; i++){
-            const column = board.columns[i];
-            if(!column) continue;
+    
+    try {
+        const story = await storyData.findById(storyid).populate("tasks");
+        if (!story) return res.status(404).json({ error: "Story not found" });
+        
+        const board = await boardData.findById(story.boardname);
+        if (!board || !board.columns || board.columns.length === 0) {
+            return res.status(404).json({ error: "Board not found or missing columns" });
+        }
+        
+        const tasks = story.tasks as any[]; 
+        const firstColumnName = board.columns[0]?.name || "TODO";
+        let tasksAdded = false;
 
-            if(column.tasks.some((id) => id.toString() === task._id.toString())){
-                present = true;
-                break;
+        for (const task of tasks) {
+            let present = false;
+            for (let i = 0; i < board.columns.length; i++) {
+                const column = board.columns[i];
+                if (!column || !column.tasks) continue;
+                if (column.tasks.some((id: any) => id.toString() === task._id.toString())) {
+                    present = true;
+                    break;
+                }
+            }
+            
+            if (!present) {
+                board.columns[0]?.tasks.push(task._id);
+                tasksAdded = true;
+                await taskData.findByIdAndUpdate(task._id, { status: firstColumnName });
             }
         }
-        if(present){
-            continue;
+        
+        if (tasksAdded) {
+            board.markModified('columns');
+            await board.save();
         }
-        const column = board.columns[0];
-        if(!column) continue;
-        column.tasks.push(task._id)
+
+        await syncStoryStatus(storyid);
+
+        res.json({ added: true });
+    } catch (error) {
+        console.error("Error adding story to board:", error);
+        res.status(500).json({ error: "Server error" });
     }
-    await board.save();
-    res.json({ added: true });
 });
 
 app.get('/getnotifications/:id', isLoggedIn, async (req: Request_user, res: Response) => {
@@ -572,24 +750,6 @@ app.post('/addcomment', isLoggedIn, async (req: Request_user ,res: Response)=>{
     res.json({ added:true })
 })
 
-app.post('/addcomment', isLoggedIn, async (req: Request_user ,res: Response)=>{
-    console.log("addingcomment")
-    const { taskid, text, mentions } = req.body
-    if(!req.user){ return res.status(401).json({ error: "Unauthorized" }); }
-    const comment = await commentData.create({
-        task: taskid,
-        user: req.user.userid,
-        text,
-        mentions,
-        createdAt: new Date(),
-        updatedAt: new Date()
-    })
-    const task = await taskData.findById(taskid);
-    task?.comments.push(comment._id)
-    await task?.save()
-    res.json({ added:true })
-})
-
 app.post('/deletecomment', isLoggedIn, async (req: Request_user ,res: Response)=>{
     console.log("deletingcomment")
     const { commentid } = req.body
@@ -616,33 +776,104 @@ app.post('/editcomment', isLoggedIn, async (req: Request_user ,res: Response)=>{
     res.json({ edited :true })
 })
 
-app.post('/deletecolumn', isLoggedIn, async (req: Request_user ,res: Response)=>{
-    console.log("deletingcolumn")
-    const { boardid, pos} = req.body
+app.post('/deletecolumn', isLoggedIn, async (req: Request_user, res: Response) => {
+    console.log("deletingcolumn");
+    const { boardid, pos } = req.body;
     const board = await boardData.findById(boardid);
-    if(!board) {return res.status(401).json({ error: "Unauthorized" });}
+    
+    if (!board || !board.columns) { return res.status(401).json({ error: "Unauthorized" }); }
+    
     board.columns.splice(pos, 1);
-    board.save();
-    console.log("done")
-    res.json({ deletedcolumn :true })
-})
+    board.markModified('columns');
+    await board.save();
 
-app.post('/renamecolumn', isLoggedIn, async (req: Request_user ,res: Response)=>{
-    console.log("renamecolumn")
-    const { newname, boardid, columnpos } = req.body
+    if (board.stories && board.stories.length > 0) {
+        for (const storyId of board.stories) {
+            const story = await storyData.findById(storyId);
+            if (story && story.tasks) {
+                let minStatus = story.status || "TODO";
+                const storyTasks = story.tasks.filter(id => id != null).map(id => id.toString());
+                
+                for (let i = 0; i < board.columns.length; i++) {
+                    const currentColumn = board.columns[i];
+                    if (!currentColumn || !currentColumn.tasks) continue;
+                    
+                    const colTasks = currentColumn.tasks.filter(id => id != null).map(id => id.toString());
+                    const taskInThisColumn = storyTasks.some(id => colTasks.includes(id));
+                    
+                    if (taskInThisColumn && currentColumn.name) {
+                        minStatus = currentColumn.name; 
+                        break; 
+                    }
+                }
+                story.status = minStatus;
+                await story.save();
+            }
+        }
+    }
+    
+    res.json({ deletedcolumn: true });
+});
+
+
+
+
+
+app.post('/renamecolumn', isLoggedIn, async (req: Request_user, res: Response) => {
+    console.log("renamecolumn");
+    const { newname, boardid, columnpos } = req.body;
     const board = await boardData.findById(boardid);
     const pos = Number(columnpos);
-    if(!board || !board.columns) {return res.status(401).json({ error: "Unauthorized" });}
-    if(pos == -1) {
-        board.columns.push({name: newname, tasks: []});
+    
+    if (!board || !board.columns) { return res.status(401).json({ error: "Unauthorized" }); }
+    
+    if (pos == -1) {
+        board.columns.push({ name: newname, tasks: [] });
+        board.markModified('columns');
+        await board.save();
     } else {
-        if(!board.columns[pos]) {return res.status(401).json({ error: "Unauthorized" });}
+        if (!board.columns[pos]) { return res.status(401).json({ error: "Unauthorized" }); }
+        
         board.columns[pos].name = newname;
+        board.markModified('columns'); 
+        await board.save();
+
+        const columnTasks = board.columns[pos].tasks;
+        if (columnTasks && columnTasks.length > 0) {
+            await taskData.updateMany(
+                { _id: { $in: columnTasks } },
+                { $set: { status: newname } }
+            );
+        }
+
+        if (board.stories && board.stories.length > 0) {
+            for (const storyId of board.stories) {
+                const story = await storyData.findById(storyId);
+                if (story && story.tasks) {
+                    let minStatus = story.status || "TODO";
+                    const storyTasks = story.tasks.filter(id => id != null).map(id => id.toString());
+                    
+                    for (let i = 0; i < board.columns.length; i++) {
+                        const currentColumn = board.columns[i];
+                        if (!currentColumn || !currentColumn.tasks) continue;
+                        
+                        const colTasks = currentColumn.tasks.filter(id => id != null).map(id => id.toString());
+                        const taskInThisColumn = storyTasks.some(id => colTasks.includes(id));
+                        
+                        if (taskInThisColumn && currentColumn.name) {
+                            minStatus = currentColumn.name; 
+                            break; 
+                        }
+                    }
+                    story.status = minStatus;
+                    await story.save();
+                }
+            }
+        }
     }
-    console.log("done")
-    board.save();
-    res.json({ deletedcolumn :true })
-})
+    
+    res.json({ renamed: true }); 
+});
 
 app.post('/addadminproject', isLoggedIn, async (req: Request_user ,res: Response)=>{
     console.log("addinig admin in the porject")
@@ -681,8 +912,7 @@ app.post('/addadminproject', isLoggedIn, async (req: Request_user ,res: Response
         project.save();
     }
     res.json({ deletedcolumn :true })
-})
-
+});
 
 app.get('/getprojectadmins/:id', async (req: Request, res: Response) => {
     console.log("getting porjectadmins");
@@ -794,7 +1024,6 @@ app.get('/getprojectboardstoread/:id', async (req: Request, res: Response) => {
     const boards = project?.boards;
     res.json({ boards });
 });
-
 
 app.get('/projecttoread/:id', async (req: Request, res: Response) => {
     console.log("project details")

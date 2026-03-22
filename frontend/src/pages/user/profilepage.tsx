@@ -1,4 +1,3 @@
-
 import styles from "./loginpage.module.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -132,23 +131,25 @@ function ProfileDashboard() {
             <p>Name: {user.name}</p>
           </div>
 
-          <img
-            className={styles.avatar}
-            src={`/${user.avatar}.jpeg`}
-          />
+           {/*this checks that if the user selected the avatar from its side or selected from the given optins*/}
+          <img className={styles.avatar} src={user.avatar.startsWith("data:image") ? user.avatar : `/${user.avatar}.jpeg`} />
+
         </div>
       </header>
 
       <section className={styles.notifications}>
         <h2 onClick={shownotifications}>Notifications</h2>
-        <button onClick={clkdclearmesages}>Clear messages</button>
+        
 
         { show && <div className={styles.notificationList} >
           {messages.map((message) => (
             <div onClick={() => clkreadmessage(message._id)} className={styles.notificationCard} key={message._id} style={{backgroundColor: !message.read ? "lightgreen" : ""}}>
               {message.Message}
+              
             </div>
+            
           ))}
+          <button className={styles.logout} onClick={clkdclearmesages}>Clear messages</button>
         </div>}
       </section>
 
@@ -169,12 +170,12 @@ function ProfileDashboard() {
                 <Link to={`/projectinfo/${project._id}`}>
                   {project.name}
                 </Link> 
-                <button onClick={() => clkdarchive(project._id)}>Archive</button>
+                <button className={styles.button} style = {{width:"100px", lineHeight:"80%",backgroundColor:"rgb(0,100,200)"}} onClick={() => clkdarchive(project._id)}>Archive</button>
               </div>
             ))}
           </div>
 
-          <button className={styles.button} onClick={showarchiveproject}>
+          <button className={styles.logout} onClick={showarchiveproject}>
             See Archived Projects
           </button>
          { showarchived && <div className={styles.projectList}>

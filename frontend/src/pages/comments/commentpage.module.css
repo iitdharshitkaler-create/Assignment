@@ -21,7 +21,12 @@
     margin-right: auto;
     box-sizing: border-box;
   }
-  
+  .editableDiv[data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: rgb(150,150,150); 
+    pointer-events: none; 
+    cursor: text;
+}
   .title {
     font-size: 1.75rem;
     font-weight: 700;
