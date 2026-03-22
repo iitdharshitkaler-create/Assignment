@@ -4,12 +4,16 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import type { User, Task, Story } from "../../types/type";
 
 function StoryInfo() {
+    // Navigation hook for redirecting the user
     const navigate = useNavigate();
-    // saving what role the user has
+    
+    // State to store the current user's role (e.g., project_admin, member)
     const [role, setRole] = useState("");
-    // getting all the specific ids from the url bar at the top
+    
+    // Extracting all the specific IDs directly from the URL parameters
     const { id, boardid, boardpos, storyid } = useParams();
-    // setting up empty story state so it doesn't crash before it loads
+    
+    // Initializing empty story state to prevent crashes before the server data loads
     const [story, setStory] = useState<Story>({
         _id: "",
         boardname: "",
@@ -17,47 +21,58 @@ function StoryInfo() {
         status: "",
         tasks: [],
     });
+    
+    // State for the project's name
     const [projectname, setProjectname] = useState("");
-    // function to grab the story details from our backend server
+
+    // Fetches the specific story details and tasks from the backend
     async function loadStories() {
         fetch(`http://localhost:3000/story/${storyid}/${id}`, {
             credentials: "include"
         })
         .then(res => res.json())
         .then(data => {
-            // update our states with the data we got back
+            // Update our local states with the retrieved data
             setStory(data.story);
             setProjectname(data.projectname);
             setRole(data.role);
         });
     }
-    // run this once right when the page first opens up
+
+    // Run the story fetch automatically when the page first loads
     useEffect(() => {
         loadStories();
     }, []);
-    // basically all the variables needed for making a new task
+
+    // State variables for handling the creation of a new task
     const [taskname, setTaskname] = useState("");
     const [taskdescription, setTaskdescription] = useState("");
     const [tasktype, setTasktype] = useState("");
+    
+    // Toggles the visibility of the "Create Task" form
     const [taskform, setTaskform] = useState(false);
-    // runs when create task button is clicked
+
+    // Submits the new task data to the backend when "Create Task" is clicked
     async function clkdone(){
         await fetch(`http://localhost:3000/addtaskinstory`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             credentials: "include",
-            // bundling up all the typed-in info to send it over
+            // Bundle up all the typed-in info to send it over
             body: JSON.stringify({ taskname, taskdescription, tasktype, storyid })
         });
-        // hide the form and reload the stuff
+        
+        // Hide the form and reload the story data to show the new task
         setTaskform(false);
         loadStories();
     }
-    // to make the add task form to pop up
+
+    // Opens the "Add Task" form
     function addtask(){
         setTaskform(true);
     }
-    // deletes a task by telling the server its index
+
+    // Deletes a task by sending its array index to the backend
     async function clkremovetask(index:number){
         await fetch(`http://localhost:3000/removetaskinstory/${storyid}`, {
             method:"POST",
@@ -67,7 +82,8 @@ function StoryInfo() {
         });
         loadStories();
     }
-    // object to hold whatever task we're trying to edit right now
+
+    // State object to hold the specific task we are currently trying to edit
     const [edittask, setEdittask] = useState<Task>({
         _id:"",
         boardname:"",
@@ -88,9 +104,11 @@ function StoryInfo() {
         closedat:"",
         auditlog:[]
     });
-    // toggle for the edit form
+
+    // Toggles the visibility of the edit form
     const [editform, SetEditform] = useState(false);
-    // sends the updated task stuff back to the database
+
+    // Sends the updated task data back to the database
     async function editdone(){
         await fetch(`http://localhost:3000/updatetask/${id}`,{
             method:"POST",
@@ -102,14 +120,17 @@ function StoryInfo() {
         SetEditform(false);
         loadStories();
     }
-    // pre-fills the edit form with the task we clicked
+
+    // Pre-fills the edit form with the data of the task we clicked
     function clkedittask(task:Task){
         setEdittask(task);
         SetEditform(true);
     }
-    // array to keep track of everyone in the project
+
+    // Array to keep track of everyone in the project (used for assigning tasks)
     const [allmembers,setAllmembers] = useState<User[]>([]);
-    // fetching the project members so we can assign tasks to them
+
+    // Fetches the project members on load so we can populate the assignee dropdown
     useEffect(()=>{
         fetch(`http://localhost:3000/allmembersinproject/${id}`,{
             credentials:"include"
@@ -120,25 +141,28 @@ function StoryInfo() {
         });
     },[]);
 
-    // kicks the user out and sends them to the homepage
+    // Logs the user out and redirects them back to the homepage
     async function clickedLogout(){
         const res = await fetch("http://localhost:3000/logout",{
             method:"POST",
             credentials:"include"
         });
         const cond = await res.json();
-        // if the server returns true then change the page
+        
+        // If the server confirms logout, change the page
         if(cond.logout){
             navigate("/");
         }
     }
-    // holding info for the person currently using the app
+
+    // Holds profile info for the person currently using the app
     const [user,setUser] = useState<User>({
         _id:"",
         name:"",
         avatar:""
     });
-    // grabbing the current user's profile on load
+
+    // Grabs the current user's profile details on load
     useEffect(()=>{
         fetch("http://localhost:3000/profile",{
             credentials:"include"
@@ -152,9 +176,10 @@ function StoryInfo() {
             });
         });
     },[]);
+
 return(
 <div className={styles.container}>
-{/* top part with the project name and user profile */}
+{/* Header section with project info, current board/story, and user profile */}
 <header className={styles.header}>
 <div>
 <h2>Project: {projectname}</h2>
@@ -165,11 +190,13 @@ return(
 <img className={styles.avatar} src={user.avatar.startsWith("data:image") ? user.avatar : `/${user.avatar}.jpeg`} />
 </div>
 </header>
+
+{/* Displays the overall status of the current story */}
 <section className={styles.section}>
 <h3>Status: {story.status}</h3>
 </section>
 
-{/* shows up only if taskform is true */}
+{/* New Task Form: Only visible if 'taskform' state is true */}
 {taskform &&
 <div className={styles.form}>
 <input placeholder="Task name" onChange={(e)=>setTaskname(e.target.value)}/>
@@ -182,16 +209,16 @@ return(
 <button onClick={clkdone}>Create Task</button></div>
 }
 
-{/* shows up only if we're editing something */}
+{/* Edit Task Form: Only visible if 'editform' state is true */}
 {editform &&
 <div className={styles.form}>
 
-{/* only admins are allowed to re-assign tasks */}
+{/* Only admins are allowed to re-assign tasks to other members */}
 {(role==="project_admin" || role==="global_admin") &&
 <select value={edittask.assigneeid}
 onChange={(e)=>setEdittask({...edittask, assigneeid:e.target.value})}>
 <option value="">Select Assignee</option>
-{/* looping through members for the dropdown */}
+{/* Looping through fetched project members to populate the dropdown */}
 {allmembers.map(user=>(
 <option key={user._id} value={user._id}> {user.name} </option>   ))}     </select> }
 
@@ -210,7 +237,7 @@ onChange={(e)=>setEdittask({...edittask,dueDate:e.target.value})}/>
 </div>}
 
 <section className={styles.section}>
-{/* table of tasks */}
+{/* Table displaying all tasks associated with this story */}
 <table className={styles.table}>
 <thead>
 <tr>
@@ -224,7 +251,8 @@ onChange={(e)=>setEdittask({...edittask,dueDate:e.target.value})}/>
 <th>Priority</th>
 <th>Actions</th>
 </tr></thead>
-<tbody>   {/* map over the tasks and make a row for each one */}
+<tbody>   
+{/* Map over the tasks array to generate a table row for each task */}
 {story.tasks.map((task,index)=>(
 <tr key={task._id}>
 <td>{task.name}</td>
@@ -237,17 +265,20 @@ onChange={(e)=>setEdittask({...edittask,dueDate:e.target.value})}/>
 <td>{task.priority}</td>
 
 <td className={styles.actions}>
-{/* only admins get to edit or delete stuff here */}
+{/* Only project admins get to see the Edit or Remove buttons */}
 {role==="project_admin" &&
 <button onClick={()=>clkedittask(task)}>Edit</button>}
 {role==="project_admin" &&
 <button onClick={()=>clkremovetask(index)}> Remove </button>}
 <Link to={`/comment/${id}/${boardid}/${boardpos}/${storyid}/${task._id}`}> Comments </Link>
 </td></tr>      ))}       </tbody></table>
-{/* button to pop open the new task form */}
+
+{/* Button to pop open the new task form (visible to admins and members) */}
 {(role==="project_admin" || role === "member") &&
 <button className={styles.button} onClick={addtask}>Add Task</button>}
 </section>
+
+{/* Global logout button */}
 <button className={styles.logout} onClick={clickedLogout}>Logout</button>
 </div>
 );}

@@ -12,7 +12,7 @@ const Project = new mongoose.Schema(
         description: String,
         project_admin: [{ type: mongoose.Schema.Types.ObjectId, ref: "user"}], //{ type: mongoose.Schema.Types.ObjectId, ref: "user"}]
         members: [{type: mongoose.Schema.Types.ObjectId, ref: "user"}], //[{ type: mongoose.Schema.Types.ObjectId, ref: "user"}],
-        // members are the viewers 
+        
         boards: [{ type: mongoose.Schema.Types.ObjectId, ref: "board" }],
         creationtime: Date,
         updatedat: Date,
